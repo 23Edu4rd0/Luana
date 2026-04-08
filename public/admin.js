@@ -12,14 +12,14 @@ const mIntegro = document.getElementById('mIntegro');
 const mAcidentado = document.getElementById('mAcidentado');
 const criarForm = document.getElementById('criarForm');
 const novoNome = document.getElementById('novoNome');
-const novoEmail = document.getElementById('novoEmail');
+const novoCurso = document.getElementById('novoCurso');
 const novaPreferencia = document.getElementById('novaPreferencia');
 const crudInfo = document.getElementById('crudInfo');
 const tabelaVazia = document.getElementById('tabelaVazia');
 const editModal = document.getElementById('editModal');
 const editForm = document.getElementById('editForm');
 const editNome = document.getElementById('editNome');
-const editEmail = document.getElementById('editEmail');
+const editCurso = document.getElementById('editCurso');
 const editPreferencia = document.getElementById('editPreferencia');
 const editErro = document.getElementById('editErro');
 const cancelarEdicao = document.getElementById('cancelarEdicao');
@@ -185,8 +185,8 @@ function renderTabela(respostas) {
         const tdNome = document.createElement('td');
         tdNome.textContent = item.nome;
 
-        const tdEmail = document.createElement('td');
-        tdEmail.textContent = item.email;
+        const tdCurso = document.createElement('td');
+        tdCurso.textContent = item.curso;
 
         const tdPreferencia = document.createElement('td');
         tdPreferencia.textContent = item.preferencia;
@@ -213,7 +213,7 @@ function renderTabela(respostas) {
         tdAcoes.appendChild(btnExcluir);
 
         tr.appendChild(tdNome);
-        tr.appendChild(tdEmail);
+        tr.appendChild(tdCurso);
         tr.appendChild(tdPreferencia);
         tr.appendChild(tdData);
         tr.appendChild(tdAcoes);
@@ -265,7 +265,7 @@ criarForm.addEventListener('submit', async (e) => {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 nome: novoNome.value,
-                email: novoEmail.value,
+                curso: novoCurso.value,
                 preferencia: novaPreferencia.value
             })
         });
@@ -300,7 +300,7 @@ tabelaBody.addEventListener('click', async (e) => {
 
         editandoId = id;
         editNome.value = registro.nome;
-        editEmail.value = registro.email;
+        editCurso.value = registro.curso;
         editPreferencia.value = registro.preferencia;
         editErro.textContent = '';
         editModal.showModal();
@@ -336,7 +336,7 @@ editForm.addEventListener('submit', async (e) => {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 nome: editNome.value,
-                email: editEmail.value,
+                curso: editCurso.value,
                 preferencia: editPreferencia.value
             })
         });

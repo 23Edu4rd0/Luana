@@ -103,6 +103,31 @@ body::before {
     max-width: 32ch;
 }
 
+.container-obrigado {
+    width: min(560px, 100%);
+    border: 1px solid rgba(183, 248, 213, 0.45);
+    border-radius: 28px;
+    box-shadow: var(--shadow-soft);
+    padding: 36px;
+    text-align: center;
+    background:
+        linear-gradient(155deg, rgba(255, 255, 255, 0.96), rgba(246, 251, 248, 0.84));
+    color: #17342f;
+}
+
+.container-obrigado h1 {
+    font-family: 'Archivo Black', sans-serif;
+    color: var(--pine-900);
+    font-size: clamp(1.8rem, 3.8vw, 2.6rem);
+    line-height: 1.08;
+    margin-bottom: 10px;
+}
+
+.subtitle-obrigado {
+    color: #2d4c47;
+    margin-bottom: 24px;
+}
+
 .form-group {
     margin-bottom: 18px;
 }
@@ -222,9 +247,11 @@ input[type="email"]:focus {
     color: #f0fff8;
     display: grid;
     place-items: center;
+    filter: grayscale(1) saturate(0.25) brightness(0.85);
     background:
         radial-gradient(circle at 25% 25%, rgba(255, 255, 255, 0.24), transparent 45%),
         linear-gradient(165deg, #1f9c83, #146252 68%, #0b3a32);
+    transition: filter 0.3s ease, transform 0.3s ease;
 }
 
 .icone-opcao.acidentado {
@@ -241,6 +268,8 @@ input[type="email"]:focus {
     display: grid;
     place-items: center;
     border-top: 1px solid rgba(13, 58, 53, 0.1);
+    opacity: 0.72;
+    transition: opacity 0.25s ease;
 }
 
 .texto-opcao {
@@ -258,6 +287,15 @@ input[type="email"]:focus {
 .card-opcao:has(input:checked) {
     transform: translateY(-8px);
     box-shadow: 0 0 0 2px rgba(183, 248, 213, 0.75), 0 20px 34px rgba(2, 16, 12, 0.52);
+}
+
+.card-opcao:has(input:checked) .icone-opcao {
+    filter: grayscale(0) saturate(1) brightness(1);
+    transform: scale(1.03);
+}
+
+.card-opcao:has(input:checked) .label-opcao {
+    opacity: 1;
 }
 
 .card-opcao:has(input[value="ACIDENTADO"]:checked) {

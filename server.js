@@ -75,10 +75,11 @@ app.use(
 
 app.use(express.static(path.join(__dirname, 'public')));
 
-function normalizarRespostaEntrada({ nome, email, preferencia }) {
+function normalizarRespostaEntrada({ nome, curso, email, preferencia }) {
+  const cursoNormalizado = String(curso || email || '').trim();
   return {
     nome: String(nome).trim(),
-    email: String(email).trim().toLowerCase(),
+    curso: cursoNormalizado,
     preferencia: String(preferencia).trim()
   };
 }
@@ -106,7 +107,7 @@ function mapearRegistroDb(row) {
   return {
     id: Number(row.id),
     nome: row.nome,
-    email: row.email,
+    curso: row.curso || row.email || '',
     preferencia: row.preferencia,
     criadoEm: new Date(row.criado_em).toISOString()
   };
@@ -122,14 +123,17 @@ async function inicializarArmazenamento() {
     CREATE TABLE IF NOT EXISTS respostas (
       id BIGSERIAL PRIMARY KEY,
       nome TEXT NOT NULL,
-      email TEXT NOT NULL,
+      curso TEXT,
       preferencia TEXT NOT NULL,
       criado_em TIMESTAMPTZ NOT NULL DEFAULT NOW()
     )
   `);
 
+  await db.query('ALTER TABLE respostas ADD COLUMN IF NOT EXISTS curso TEXT');
+  await db.query('UPDATE respostas SET curso = email WHERE (curso IS NULL OR curso = \'\') AND email IS NOT NULL');
+
   await db.query('CREATE INDEX IF NOT EXISTS idx_respostas_criado_em ON respostas (criado_em DESC)');
-  await db.query('CREATE INDEX IF NOT EXISTS idx_respostas_email ON respostas (email)');
+  await db.query('CREATE INDEX IF NOT EXISTS idx_respostas_curso ON respostas (curso)');
 }
 
 async function listarRespostas() {
@@ -138,13 +142,13 @@ async function listarRespostas() {
   }
 
   const resultado = await db.query(
-    'SELECT id, nome, email, preferencia, criado_em FROM respostas ORDER BY criado_em DESC'
+    'SELECT id, nome, curso, email, preferencia, criado_em FROM respostas ORDER BY criado_em DESC'
   );
   return resultado.rows.map(mapearRegistroDb);
 }
 
-async function inserirResposta({ nome, email, preferencia }) {
-  const entrada = normalizarRespostaEntrada({ nome, email, preferencia });
+async function inserirResposta({ nome, curso, email, preferencia }) {
+  const entrada = normalizarRespostaEntrada({ nome, curso, email, preferencia });
 
   if (!useDatabase) {
     const respostas = await lerRespostas();
@@ -155,17 +159,17 @@ async function inserirResposta({ nome, email, preferencia }) {
   }
 
   const resultado = await db.query(
-    `INSERT INTO respostas (nome, email, preferencia)
+    `INSERT INTO respostas (nome, curso, preferencia)
      VALUES ($1, $2, $3)
-     RETURNING id, nome, email, preferencia, criado_em`,
-    [entrada.nome, entrada.email, entrada.preferencia]
+     RETURNING id, nome, curso, email, preferencia, criado_em`,
+    [entrada.nome, entrada.curso, entrada.preferencia]
   );
 
   return mapearRegistroDb(resultado.rows[0]);
 }
 
-async function atualizarResposta(id, { nome, email, preferencia }) {
-  const entrada = normalizarRespostaEntrada({ nome, email, preferencia });
+async function atualizarResposta(id, { nome, curso, email, preferencia }) {
+  const entrada = normalizarRespostaEntrada({ nome, curso, email, preferencia });
 
   if (!useDatabase) {
     const respostas = await lerRespostas();
@@ -178,7 +182,7 @@ async function atualizarResposta(id, { nome, email, preferencia }) {
     respostas[index] = criarRegistro({
       id,
       nome: entrada.nome,
-      email: entrada.email,
+      curso: entrada.curso,
       preferencia: entrada.preferencia,
       criadoEm: respostas[index].criadoEm
     });
@@ -189,10 +193,10 @@ async function atualizarResposta(id, { nome, email, preferencia }) {
 
   const resultado = await db.query(
     `UPDATE respostas
-     SET nome = $1, email = $2, preferencia = $3
+     SET nome = $1, curso = $2, preferencia = $3
      WHERE id = $4
-     RETURNING id, nome, email, preferencia, criado_em`,
-    [entrada.nome, entrada.email, entrada.preferencia, id]
+     RETURNING id, nome, curso, email, preferencia, criado_em`,
+    [entrada.nome, entrada.curso, entrada.preferencia, id]
   );
 
   if (resultado.rowCount === 0) {
@@ -220,19 +224,19 @@ async function excluirResposta(id) {
   return resultado.rowCount > 0;
 }
 
-function validarRespostaEntrada(nome, email, preferencia) {
-  if (!nome || !email || !preferencia) {
-    return 'Preencha nome, email e preferencia.';
+function validarRespostaEntrada(nome, curso, preferencia) {
+  if (!nome || !curso || !preferencia) {
+    return 'Preencha nome, curso e preferencia.';
   }
 
   return null;
 }
 
-function criarRegistro({ id, nome, email, preferencia, criadoEm }) {
+function criarRegistro({ id, nome, curso, email, preferencia, criadoEm }) {
   return {
     id: id || Date.now(),
     nome: String(nome).trim(),
-    email: String(email).trim().toLowerCase(),
+    curso: String(curso || email || '').trim(),
     preferencia: String(preferencia).trim(),
     criadoEm: criadoEm || new Date().toISOString()
   };
@@ -247,14 +251,15 @@ function exigeAdmin(req, res, next) {
 
 app.post('/api/respostas', async (req, res) => {
   try {
-    const { nome, email, preferencia } = req.body;
+    const { nome, curso, email, preferencia } = req.body;
+    const cursoFinal = curso || email;
 
-    const erroValidacao = validarRespostaEntrada(nome, email, preferencia);
+    const erroValidacao = validarRespostaEntrada(nome, cursoFinal, preferencia);
     if (erroValidacao) {
       return res.status(400).json({ mensagem: erroValidacao });
     }
 
-    await inserirResposta({ nome, email, preferencia });
+    await inserirResposta({ nome, curso: cursoFinal, email, preferencia });
 
     return res.status(201).json({ mensagem: 'Resposta salva com sucesso.' });
   } catch (erro) {
@@ -264,14 +269,15 @@ app.post('/api/respostas', async (req, res) => {
 
 app.post('/api/admin/respostas', exigeAdmin, async (req, res) => {
   try {
-    const { nome, email, preferencia } = req.body;
+    const { nome, curso, email, preferencia } = req.body;
+    const cursoFinal = curso || email;
 
-    const erroValidacao = validarRespostaEntrada(nome, email, preferencia);
+    const erroValidacao = validarRespostaEntrada(nome, cursoFinal, preferencia);
     if (erroValidacao) {
       return res.status(400).json({ mensagem: erroValidacao });
     }
 
-    const registro = await inserirResposta({ nome, email, preferencia });
+    const registro = await inserirResposta({ nome, curso: cursoFinal, email, preferencia });
 
     return res.status(201).json({ mensagem: 'Resposta criada com sucesso.', registro });
   } catch (erro) {
@@ -282,18 +288,19 @@ app.post('/api/admin/respostas', exigeAdmin, async (req, res) => {
 app.put('/api/admin/respostas/:id', exigeAdmin, async (req, res) => {
   try {
     const id = Number(req.params.id);
-    const { nome, email, preferencia } = req.body;
+    const { nome, curso, email, preferencia } = req.body;
+    const cursoFinal = curso || email;
 
     if (!Number.isFinite(id)) {
       return res.status(400).json({ mensagem: 'ID invalido.' });
     }
 
-    const erroValidacao = validarRespostaEntrada(nome, email, preferencia);
+    const erroValidacao = validarRespostaEntrada(nome, cursoFinal, preferencia);
     if (erroValidacao) {
       return res.status(400).json({ mensagem: erroValidacao });
     }
 
-    const registro = await atualizarResposta(id, { nome, email, preferencia });
+    const registro = await atualizarResposta(id, { nome, curso: cursoFinal, email, preferencia });
 
     if (!registro) {
       return res.status(404).json({ mensagem: 'Resposta nao encontrada.' });

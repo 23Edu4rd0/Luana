@@ -380,6 +380,12 @@ input[type="email"]:focus {
     opacity: 1;
 }
 
+@media (max-width: 900px) {
+    .admin-link {
+        display: none;
+    }
+}
+
 @keyframes fadeRise {
     from {
         opacity: 0;

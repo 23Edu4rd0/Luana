@@ -65,9 +65,31 @@
                     <input id="novoNome" type="text" placeholder="Nome" required>
                     <input id="novoCurso" type="text" placeholder="Curso" required>
                     <select id="novaPreferencia" required>
-                        <option value="">Selecione</option>
+                        <option value="">Selecione preferência</option>
                         <option value="ÍNTEGRO">ÍNTEGRO</option>
                         <option value="ACIDENTADO">ACIDENTADO</option>
+                    </select>
+                    <select id="novoAbrilVerde" required>
+                        <option value="">Selecione abril verde</option>
+                        <option value="SIM">SIM</option>
+                        <option value="NAO">NÃO</option>
+                    </select>
+                    <select id="novaAtitudes" required>
+                        <option value="">Selecione atitudes</option>
+                        <option value="SIM">SIM</option>
+                        <option value="NAO">NÃO</option>
+                    </select>
+                    <select id="novoRisco" required>
+                        <option value="">Selecione risco</option>
+                        <option value="IGNORARIA">IGNORARIA</option>
+                        <option value="AVISARIA">AVISARIA</option>
+                        <option value="TENTARIA">TENTARIA</option>
+                    </select>
+                    <select id="novaResponsabilidade" required>
+                        <option value="">Selecione responsabilidade</option>
+                        <option value="EMPRESA">APENAS A EMPRESA</option>
+                        <option value="TRABALHADOR">APENAS O TRABALHADOR</option>
+                        <option value="AMBOS">AMBOS</option>
                     </select>
                     <button type="submit">Criar</button>
                 </form>
@@ -85,9 +107,13 @@
                             <tr>
                                 <th>Nome</th>
                                 <th>Curso</th>
-                                <th>Preferencia</th>
+                                <th>Preferência</th>
+                                <th>Abril Verde</th>
+                                <th>Atitudes</th>
+                                <th>Risco</th>
+                                <th>Responsabilidade</th>
                                 <th>Data</th>
-                                <th>Acoes</th>
+                                <th>Ações</th>
                             </tr>
                         </thead>
                         <tbody id="tabelaBody"></tbody>
@@ -105,6 +131,24 @@
                 <select id="editPreferencia" required>
                     <option value="ÍNTEGRO">ÍNTEGRO</option>
                     <option value="ACIDENTADO">ACIDENTADO</option>
+                </select>
+                <select id="editAbrilVerde" required>
+                    <option value="SIM">SIM</option>
+                    <option value="NAO">NÃO</option>
+                </select>
+                <select id="editAtitudes" required>
+                    <option value="SIM">SIM</option>
+                    <option value="NAO">NÃO</option>
+                </select>
+                <select id="editRisco" required>
+                    <option value="IGNORARIA">IGNORARIA</option>
+                    <option value="AVISARIA">AVISARIA</option>
+                    <option value="TENTARIA">TENTARIA</option>
+                </select>
+                <select id="editResponsabilidade" required>
+                    <option value="EMPRESA">APENAS A EMPRESA</option>
+                    <option value="TRABALHADOR">APENAS O TRABALHADOR</option>
+                    <option value="AMBOS">AMBOS</option>
                 </select>
                 <div class="modal-acoes">
                     <button type="button" id="cancelarEdicao" class="secundario">Cancelar</button>

@@ -74,13 +74,18 @@ app.use(
 );
 
 app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static(path.join(__dirname, 'static')));
 
-function normalizarRespostaEntrada({ nome, curso, email, preferencia }) {
+function normalizarRespostaEntrada({ nome, curso, email, preferencia, risco, atitudes, abrilVerde, responsabilidade }) {
   const cursoNormalizado = String(curso || email || '').trim();
   return {
     nome: String(nome).trim(),
     curso: cursoNormalizado,
-    preferencia: String(preferencia).trim()
+    preferencia: String(preferencia).trim(),
+    risco: String(risco).trim(),
+    atitudes: String(atitudes).trim(),
+    abrilVerde: String(abrilVerde).trim(),
+    responsabilidade: String(responsabilidade).trim()
   };
 }
 
@@ -109,6 +114,10 @@ function mapearRegistroDb(row) {
     nome: row.nome,
     curso: row.curso || row.email || '',
     preferencia: row.preferencia,
+    risco: row.risco || '',
+    atitudes: row.atitudes || '',
+    abrilVerde: row.abrilVerde || '',
+    responsabilidade: row.responsabilidade || '',
     criadoEm: new Date(row.criado_em).toISOString()
   };
 }
@@ -131,6 +140,10 @@ async function inicializarArmazenamento() {
     `);
 
     await db.query('ALTER TABLE respostas ADD COLUMN IF NOT EXISTS curso TEXT');
+    await db.query('ALTER TABLE respostas ADD COLUMN IF NOT EXISTS risco TEXT');
+    await db.query('ALTER TABLE respostas ADD COLUMN IF NOT EXISTS atitudes TEXT');
+    await db.query('ALTER TABLE respostas ADD COLUMN IF NOT EXISTS abrilVerde TEXT');
+    await db.query('ALTER TABLE respostas ADD COLUMN IF NOT EXISTS responsabilidade TEXT');
     
     await db.query('UPDATE respostas SET curso = email WHERE (curso IS NULL OR curso = \'\') AND email IS NOT NULL');
 
@@ -150,13 +163,13 @@ async function listarRespostas() {
   }
 
   const resultado = await db.query(
-    'SELECT id, nome, curso, email, preferencia, criado_em FROM respostas ORDER BY criado_em DESC'
+    'SELECT id, nome, curso, email, preferencia, risco, atitudes, abrilVerde, responsabilidade, criado_em FROM respostas ORDER BY criado_em DESC'
   );
   return resultado.rows.map(mapearRegistroDb);
 }
 
-async function inserirResposta({ nome, curso, email, preferencia }) {
-  const entrada = normalizarRespostaEntrada({ nome, curso, email, preferencia });
+async function inserirResposta({ nome, curso, email, preferencia, risco, atitudes, abrilVerde, responsabilidade }) {
+  const entrada = normalizarRespostaEntrada({ nome, curso, email, preferencia, risco, atitudes, abrilVerde, responsabilidade });
 
   if (!useDatabase) {
     const respostas = await lerRespostas();
@@ -167,17 +180,17 @@ async function inserirResposta({ nome, curso, email, preferencia }) {
   }
 
   const resultado = await db.query(
-    `INSERT INTO respostas (nome, curso, preferencia)
-     VALUES ($1, $2, $3)
-     RETURNING id, nome, curso, email, preferencia, criado_em`,
-    [entrada.nome, entrada.curso, entrada.preferencia]
+    `INSERT INTO respostas (nome, curso, preferencia, risco, atitudes, abrilVerde, responsabilidade)
+     VALUES ($1, $2, $3, $4, $5, $6, $7)
+     RETURNING id, nome, curso, email, preferencia, risco, atitudes, abrilVerde, responsabilidade, criado_em`,
+    [entrada.nome, entrada.curso, entrada.preferencia, entrada.risco, entrada.atitudes, entrada.abrilVerde, entrada.responsabilidade]
   );
 
   return mapearRegistroDb(resultado.rows[0]);
 }
 
-async function atualizarResposta(id, { nome, curso, email, preferencia }) {
-  const entrada = normalizarRespostaEntrada({ nome, curso, email, preferencia });
+async function atualizarResposta(id, { nome, curso, email, preferencia, risco, atitudes, abrilVerde, responsabilidade }) {
+  const entrada = normalizarRespostaEntrada({ nome, curso, email, preferencia, risco, atitudes, abrilVerde, responsabilidade });
 
   if (!useDatabase) {
     const respostas = await lerRespostas();
@@ -192,6 +205,10 @@ async function atualizarResposta(id, { nome, curso, email, preferencia }) {
       nome: entrada.nome,
       curso: entrada.curso,
       preferencia: entrada.preferencia,
+      risco: entrada.risco,
+      atitudes: entrada.atitudes,
+      abrilVerde: entrada.abrilVerde,
+      responsabilidade: entrada.responsabilidade,
       criadoEm: respostas[index].criadoEm
     });
 
@@ -201,10 +218,10 @@ async function atualizarResposta(id, { nome, curso, email, preferencia }) {
 
   const resultado = await db.query(
     `UPDATE respostas
-     SET nome = $1, curso = $2, preferencia = $3
-     WHERE id = $4
-     RETURNING id, nome, curso, email, preferencia, criado_em`,
-    [entrada.nome, entrada.curso, entrada.preferencia, id]
+     SET nome = $1, curso = $2, preferencia = $3, risco = $4, atitudes = $5, abrilVerde = $6, responsabilidade = $7
+     WHERE id = $8
+     RETURNING id, nome, curso, email, preferencia, risco, atitudes, abrilVerde, responsabilidade, criado_em`,
+    [entrada.nome, entrada.curso, entrada.preferencia, entrada.risco, entrada.atitudes, entrada.abrilVerde, entrada.responsabilidade, id]
   );
 
   if (resultado.rowCount === 0) {
@@ -232,20 +249,24 @@ async function excluirResposta(id) {
   return resultado.rowCount > 0;
 }
 
-function validarRespostaEntrada(nome, curso, preferencia) {
-  if (!nome || !curso || !preferencia) {
-    return 'Preencha nome, curso e preferencia.';
+function validarRespostaEntrada(nome, curso, preferencia, risco, atitudes, abrilVerde, responsabilidade) {
+  if (!nome || !curso || !preferencia || !risco || !atitudes || !abrilVerde || !responsabilidade) {
+    return 'Preencha nome, curso, preferencia, risco, atitudes, abril verde e responsabilidade.';
   }
 
   return null;
 }
 
-function criarRegistro({ id, nome, curso, email, preferencia, criadoEm }) {
+function criarRegistro({ id, nome, curso, email, preferencia, risco, atitudes, abrilVerde, responsabilidade, criadoEm }) {
   return {
     id: id || Date.now(),
     nome: String(nome).trim(),
     curso: String(curso || email || '').trim(),
     preferencia: String(preferencia).trim(),
+    risco: String(risco).trim(),
+    atitudes: String(atitudes).trim(),
+    abrilVerde: String(abrilVerde).trim(),
+    responsabilidade: String(responsabilidade).trim(),
     criadoEm: criadoEm || new Date().toISOString()
   };
 }
@@ -259,15 +280,15 @@ function exigeAdmin(req, res, next) {
 
 app.post('/api/respostas', async (req, res) => {
   try {
-    const { nome, curso, email, preferencia } = req.body;
+    const { nome, curso, email, preferencia, risco, atitudes, abrilVerde, responsabilidade } = req.body;
     const cursoFinal = curso || email;
 
-    const erroValidacao = validarRespostaEntrada(nome, cursoFinal, preferencia);
+    const erroValidacao = validarRespostaEntrada(nome, cursoFinal, preferencia, risco, atitudes, abrilVerde, responsabilidade);
     if (erroValidacao) {
       return res.status(400).json({ mensagem: erroValidacao });
     }
 
-    await inserirResposta({ nome, curso: cursoFinal, email, preferencia });
+    await inserirResposta({ nome, curso: cursoFinal, email, preferencia, risco, atitudes, abrilVerde, responsabilidade });
 
     return res.status(201).json({ mensagem: 'Resposta salva com sucesso.' });
   } catch (erro) {
@@ -278,15 +299,15 @@ app.post('/api/respostas', async (req, res) => {
 
 app.post('/api/admin/respostas', exigeAdmin, async (req, res) => {
   try {
-    const { nome, curso, email, preferencia } = req.body;
+    const { nome, curso, email, preferencia, risco, atitudes, abrilVerde, responsabilidade } = req.body;
     const cursoFinal = curso || email;
 
-    const erroValidacao = validarRespostaEntrada(nome, cursoFinal, preferencia);
+    const erroValidacao = validarRespostaEntrada(nome, cursoFinal, preferencia, risco, atitudes, abrilVerde, responsabilidade);
     if (erroValidacao) {
       return res.status(400).json({ mensagem: erroValidacao });
     }
 
-    const registro = await inserirResposta({ nome, curso: cursoFinal, email, preferencia });
+    const registro = await inserirResposta({ nome, curso: cursoFinal, email, preferencia, risco, atitudes, abrilVerde, responsabilidade });
 
     return res.status(201).json({ mensagem: 'Resposta criada com sucesso.', registro });
   } catch (erro) {
@@ -298,19 +319,19 @@ app.post('/api/admin/respostas', exigeAdmin, async (req, res) => {
 app.put('/api/admin/respostas/:id', exigeAdmin, async (req, res) => {
   try {
     const id = Number(req.params.id);
-    const { nome, curso, email, preferencia } = req.body;
+    const { nome, curso, email, preferencia, risco, atitudes, abrilVerde, responsabilidade } = req.body;
     const cursoFinal = curso || email;
 
     if (!Number.isFinite(id)) {
       return res.status(400).json({ mensagem: 'ID invalido.' });
     }
 
-    const erroValidacao = validarRespostaEntrada(nome, cursoFinal, preferencia);
+    const erroValidacao = validarRespostaEntrada(nome, cursoFinal, preferencia, risco, atitudes, abrilVerde, responsabilidade);
     if (erroValidacao) {
       return res.status(400).json({ mensagem: erroValidacao });
     }
 
-    const registro = await atualizarResposta(id, { nome, curso: cursoFinal, email, preferencia });
+    const registro = await atualizarResposta(id, { nome, curso: cursoFinal, email, preferencia, risco, atitudes, abrilVerde, responsabilidade });
 
     if (!registro) {
       return res.status(404).json({ mensagem: 'Resposta nao encontrada.' });

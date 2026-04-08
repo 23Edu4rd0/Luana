@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Formulário - Preferência de Chegada em Casa</title>
+    <title>Formulário - Questionário de Segurança</title>
     <link rel="icon" href="data:,">
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
@@ -12,31 +12,19 @@
     <!-- Etapa 1: Dados Pessoais -->
     <div id="etapa1" class="etapa ativo">
         <div class="container-form">
-            <p class="kicker">Etapa 1 de 2</p>
+            <p class="kicker">Etapa 1 de 4</p>
             <h1>Dados Pessoais</h1>
             <p class="subtitle">Preencha seus dados para começar</p>
             
             <form id="formularioDados">
                 <div class="form-group">
                     <label for="nome">Nome completo *</label>
-                    <input 
-                        type="text" 
-                        id="nome" 
-                        name="nome" 
-                        placeholder="Digite seu nome" 
-                        required
-                    >
+                    <input type="text" id="nome" name="nome" placeholder="Digite seu nome" required>
                 </div>
                 
                 <div class="form-group">
                     <label for="curso">Curso *</label>
-                    <input 
-                        type="text" 
-                        id="curso" 
-                        name="curso" 
-                        placeholder="Digite seu curso" 
-                        required
-                    >
+                    <input type="text" id="curso" name="curso" placeholder="Digite seu curso" required>
                 </div>
                 
                 <button type="submit" class="btn-proxima">Próxima Etapa</button>
@@ -44,68 +32,181 @@
         </div>
     </div>
 
-    <!-- Etapa 2: Pergunta Principal -->
+    <!-- Etapa 2: Pergunta Abril Verde -->
     <div id="etapa2" class="etapa">
         <div class="container-principal">
-            <p class="kicker kicker-light">Etapa 2 de 2</p>
-            <h1 class="titulo-pergunta">Como você gostaria de voltar para casa?</h1>
+            <p class="kicker kicker-light">Pergunta 1 de 4</p>
+            <h1 class="titulo-pergunta">Você sabe o que é Abril Verde?</h1>
             
-            <form id="formularioPergunta">
+            <form id="formularioPergunta2">
                 <div class="opcoes-container">
-                    <!-- Opção 1: Íntegro -->
                     <div class="card-opcao">
-                        <input 
-                            type="radio" 
-                            id="integro" 
-                            name="preferencia" 
-                            value="ÍNTEGRO" 
-                            required
-                        >
+                        <input type="radio" id="abrilSim" name="abrilVerde" value="SIM" required>
                         <div class="numero">1.</div>
-                        <div class="icone-opcao">
-                            <i class="fas fa-user-check"></i>
-                        </div>
-                        <label for="integro" class="label-opcao">
-                            <span class="texto-opcao">ÍNTEGRO</span>
+                        <div class="icone-opcao" style="background: linear-gradient(165deg, #00aa00, #00cc00 68%, #009900);"><i class="fas fa-check-circle"></i></div>
+                        <label for="abrilSim" class="label-opcao">
+                            <span class="texto-opcao" style="color: #00cc00;">SIM</span>
                         </label>
                     </div>
 
-                    <!-- Opção 2: Acidentado -->
                     <div class="card-opcao">
-                        <input 
-                            type="radio" 
-                            id="acidentado" 
-                            name="preferencia" 
-                            value="ACIDENTADO" 
-                            required
-                        >
+                        <input type="radio" id="abrilNao" name="abrilVerde" value="NAO" required>
                         <div class="numero">2.</div>
-                        <div class="icone-opcao acidentado">
-                            <i class="fas fa-user-injured"></i>
-                        </div>
-                        <label for="acidentado" class="label-opcao">
-                            <span class="texto-opcao acidentado-texto">ACIDENTADO</span>
+                        <div class="icone-opcao acidentado"><i class="fas fa-times-circle"></i></div>
+                        <label for="abrilNao" class="label-opcao">
+                            <span class="texto-opcao acidentado-texto">NÃO</span>
                         </label>
                     </div>
                 </div>
 
-                <button type="submit" class="btn-enviar">Enviar Resposta</button>
+                <button type="submit" class="btn-enviar">Proxima pergunta</button>
                 <button type="button" class="btn-voltar" onclick="voltarEtapa()">Voltar</button>
-
-                <div class="success-message" id="successMessage">
-                    ✓ Obrigado! Suas respostas foram registradas com sucesso.
-                </div>
-                <div class="error-message" id="errorMessage"></div>
+                <div class="error-message" id="errorMessage2"></div>
             </form>
         </div>
     </div>
 
-    <!-- Etapa 3: Agradecimento -->
+    <!-- Etapa 3: Pergunta Atitudes -->
     <div id="etapa3" class="etapa">
+        <div class="container-principal">
+            <p class="kicker kicker-light">Pergunta 2 de 4</p>
+            <h1 class="titulo-pergunta">Você acredita que pequenas atitudes podem evitar acidentes?</h1>
+            
+            <form id="formularioPergunta3">
+                <div class="opcoes-container">
+                    <div class="card-opcao">
+                        <input type="radio" id="atitudeSim" name="atitudes" value="SIM" required>
+                        <div class="numero">1.</div>
+                        <div class="icone-opcao" style="background: linear-gradient(165deg, #00aa00, #00cc00 68%, #009900);"><i class="fas fa-check-circle"></i></div>
+                        <label for="atitudeSim" class="label-opcao">
+                            <span class="texto-opcao" style="color: #00cc00;">SIM</span>
+                        </label>
+                    </div>
+
+                    <div class="card-opcao">
+                        <input type="radio" id="atitudeNao" name="atitudes" value="NAO" required>
+                        <div class="numero">2.</div>
+                        <div class="icone-opcao acidentado"><i class="fas fa-times-circle"></i></div>
+                        <label for="atitudeNao" class="label-opcao">
+                            <span class="texto-opcao acidentado-texto">NÃO</span>
+                        </label>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn-enviar">Proxima pergunta</button>
+                <button type="button" class="btn-voltar" onclick="voltarEtapa()">Voltar</button>
+                <div class="error-message" id="errorMessage3"></div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Etapa 4: Pergunta Risco -->
+    <div id="etapa4" class="etapa">
+        <div class="container-principal">
+            <p class="kicker kicker-light">Pergunta 3 de 4</p>
+            <h1 class="titulo-pergunta">Se você identificar um risco no ambiente de trabalho, o que faria?</h1>
+            
+            <form id="formularioPergunta4">
+                <div class="opcoes-container">
+                    <div class="card-opcao">
+                        <input type="radio" id="ignoraria" name="risco" value="IGNORARIA" required>
+                        <div class="numero">1.</div>
+                        <div class="icone-opcao"><i class="fas fa-eye-slash"></i></div>
+                        <label for="ignoraria" class="label-opcao">
+                            <span class="texto-opcao">IGNORARIA</span>
+                        </label>
+                    </div>
+
+                    <div class="card-opcao">
+                        <input type="radio" id="avisaria" name="risco" value="AVISARIA" required>
+                        <div class="numero">2.</div>
+                        <div class="icone-opcao" style="background: linear-gradient(165deg, #00aa00, #00cc00 68%, #009900);"><i class="fas fa-hand-paper"></i></div>
+                        <label for="avisaria" class="label-opcao">
+                            <span class="texto-opcao" style="color: #00cc00;">AVISARIA</span>
+                        </label>
+                    </div>
+
+                    <div class="card-opcao">
+                        <input type="radio" id="tentaria" name="risco" value="TENTARIA" required>
+                        <div class="numero">3.</div>
+                        <div class="icone-opcao" style="background: linear-gradient(165deg, #4169e1, #1e90ff 68%, #0047ab);"><i class="fas fa-tools"></i></div>
+                        <label for="tentaria" class="label-opcao">
+                            <span class="texto-opcao" style="color: #4169e1;">TENTARIA</span>
+                        </label>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn-enviar">Proxima pergunta</button>
+                <button type="button" class="btn-voltar" onclick="voltarEtapa()">Voltar</button>
+                <div class="error-message" id="errorMessage4"></div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Etapa 5: Pergunta Responsabilidade -->
+    <div id="etapa5" class="etapa">
+        <div class="container-principal">
+            <p class="kicker kicker-light">Pergunta 4 de 4</p>
+            <h1 class="titulo-pergunta">Quem é responsável pela segurança no trabalho?</h1>
+            
+            <form id="formularioPergunta5">
+                <div class="opcoes-container">
+                    <div class="card-opcao">
+                        <input type="radio" id="empresa" name="responsabilidade" value="EMPRESA" required>
+                        <div class="numero">1.</div>
+                        <div class="icone-opcao" style="background: linear-gradient(165deg, #666, #333 68%, #000);"><i class="fas fa-building"></i></div>
+                        <label for="empresa" class="label-opcao">
+                            <span class="texto-opcao" style="color: #999;">APENAS A EMPRESA</span>
+                        </label>
+                    </div>
+
+                    <div class="card-opcao">
+                        <input type="radio" id="trabalhador" name="responsabilidade" value="TRABALHADOR" required>
+                        <div class="numero">2.</div>
+                        <div class="icone-opcao" style="background: linear-gradient(165deg, #666, #333 68%, #000);"><i class="fas fa-user-hard-hat"></i></div>
+                        <label for="trabalhador" class="label-opcao">
+                            <span class="texto-opcao" style="color: #999;">APENAS O TRABALHADOR</span>
+                        </label>
+                    </div>
+
+                    <div class="card-opcao">
+                        <input type="radio" id="ambos" name="responsabilidade" value="AMBOS" required>
+                        <div class="numero">3.</div>
+                        <div class="icone-opcao" style="background: linear-gradient(165deg, #00aa00, #00cc00 68%, #009900);"><i class="fas fa-handshake"></i></div>
+                        <label for="ambos" class="label-opcao">
+                            <span class="texto-opcao" style="color: #00cc00;">AMBOS</span>
+                        </label>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn-enviar">Enviar Respostas</button>
+                <button type="button" class="btn-voltar" onclick="voltarEtapa()">Voltar</button>
+                <div class="error-message" id="errorMessage5"></div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Etapa 6: Feedback separado -->
+    <div id="etapaFeedback" class="etapa">
+        <div class="container-principal">
+            <p class="kicker kicker-light">Observacao</p>
+            <h1 class="titulo-pergunta" id="feedbackTitulo">Resultado</h1>
+            <div class="feedback-box" style="display: block; margin-top: 16px;">
+                <div id="feedbackContent" class="feedback-content correto">
+                    <img id="feedbackImagem" src="/desista.png" alt="Feedback" style="max-width: 180px; border-radius: 10px; display: none;">
+                    <p id="feedbackTexto"></p>
+                    <button type="button" id="feedbackProximo" class="btn-proximo">Proximo</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Etapa 7: Agradecimento -->
+    <div id="etapa7" class="etapa">
         <div class="container-obrigado">
             <p class="kicker">Concluido</p>
-            <h1>Obrigado pela resposta!</h1>
-            <p class="subtitle-obrigado">Recebemos seu questionario com sucesso.</p>
+            <h1>Obrigado pelas respostas!</h1>
+            <p class="subtitle-obrigado">Recebemos seu questionário com sucesso.</p>
             <button type="button" id="responderNovamente" class="btn-proxima">Responder novamente</button>
         </div>
     </div>

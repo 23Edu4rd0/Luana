@@ -5,7 +5,7 @@
   "description": "Formulario com area admin protegida por senha",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js",
+    "start": "node server.js --watch",
     "dev": "node server.js"
   },
   "dependencies": {

@@ -14,6 +14,10 @@ const criarForm = document.getElementById('criarForm');
 const novoNome = document.getElementById('novoNome');
 const novoCurso = document.getElementById('novoCurso');
 const novaPreferencia = document.getElementById('novaPreferencia');
+const novoAbrilVerde = document.getElementById('novoAbrilVerde');
+const novaAtitudes = document.getElementById('novaAtitudes');
+const novoRisco = document.getElementById('novoRisco');
+const novaResponsabilidade = document.getElementById('novaResponsabilidade');
 const crudInfo = document.getElementById('crudInfo');
 const tabelaVazia = document.getElementById('tabelaVazia');
 const editModal = document.getElementById('editModal');
@@ -21,6 +25,10 @@ const editForm = document.getElementById('editForm');
 const editNome = document.getElementById('editNome');
 const editCurso = document.getElementById('editCurso');
 const editPreferencia = document.getElementById('editPreferencia');
+const editAbrilVerde = document.getElementById('editAbrilVerde');
+const editAtitudes = document.getElementById('editAtitudes');
+const editRisco = document.getElementById('editRisco');
+const editResponsabilidade = document.getElementById('editResponsabilidade');
 const editErro = document.getElementById('editErro');
 const cancelarEdicao = document.getElementById('cancelarEdicao');
 const graficoPreferenciaEl = document.getElementById('graficoPreferencia');
@@ -215,6 +223,18 @@ function renderTabela(respostas) {
         const tdPreferencia = document.createElement('td');
         tdPreferencia.textContent = item.preferencia;
 
+        const tdAbrilVerde = document.createElement('td');
+        tdAbrilVerde.textContent = item.abrilVerde;
+
+        const tdAtitudes = document.createElement('td');
+        tdAtitudes.textContent = item.atitudes;
+
+        const tdRisco = document.createElement('td');
+        tdRisco.textContent = item.risco;
+
+        const tdResponsabilidade = document.createElement('td');
+        tdResponsabilidade.textContent = item.responsabilidade;
+
         const tdData = document.createElement('td');
         tdData.textContent = new Date(item.criadoEm).toLocaleString('pt-BR');
 
@@ -239,6 +259,10 @@ function renderTabela(respostas) {
         tr.appendChild(tdNome);
         tr.appendChild(tdCurso);
         tr.appendChild(tdPreferencia);
+        tr.appendChild(tdAbrilVerde);
+        tr.appendChild(tdAtitudes);
+        tr.appendChild(tdRisco);
+        tr.appendChild(tdResponsabilidade);
         tr.appendChild(tdData);
         tr.appendChild(tdAcoes);
         tabelaBody.appendChild(tr);
@@ -290,7 +314,11 @@ criarForm.addEventListener('submit', async (e) => {
             body: JSON.stringify({
                 nome: novoNome.value,
                 curso: novoCurso.value,
-                preferencia: novaPreferencia.value
+                preferencia: novaPreferencia.value,
+                abrilVerde: novoAbrilVerde.value,
+                atitudes: novaAtitudes.value,
+                risco: novoRisco.value,
+                responsabilidade: novaResponsabilidade.value
             })
         });
 
@@ -326,6 +354,10 @@ tabelaBody.addEventListener('click', async (e) => {
         editNome.value = registro.nome;
         editCurso.value = registro.curso;
         editPreferencia.value = registro.preferencia;
+        editAbrilVerde.value = registro.abrilVerde;
+        editAtitudes.value = registro.atitudes;
+        editRisco.value = registro.risco;
+        editResponsabilidade.value = registro.responsabilidade;
         editErro.textContent = '';
         editModal.showModal();
         return;
@@ -361,7 +393,11 @@ editForm.addEventListener('submit', async (e) => {
             body: JSON.stringify({
                 nome: editNome.value,
                 curso: editCurso.value,
-                preferencia: editPreferencia.value
+                preferencia: editPreferencia.value,
+                abrilVerde: editAbrilVerde.value,
+                atitudes: editAtitudes.value,
+                risco: editRisco.value,
+                responsabilidade: editResponsabilidade.value
             })
         });
 

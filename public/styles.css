@@ -440,3 +440,81 @@ input[type="email"]:focus {
         font-size: 1.6rem;
     }
 }
+
+/* Estilos para feedback */
+.feedback-box {
+    display: none;
+    width: 100%;
+    margin: 20px 0;
+    animation: slideIn 0.3s ease;
+}
+
+.feedback-content {
+    padding: 20px;
+    border-radius: 12px;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 15px;
+}
+
+.feedback-content.correto {
+    background: rgba(0, 200, 100, 0.2);
+    border: 2px solid #00cc00;
+    color: #00ff99;
+}
+
+.feedback-content.errado {
+    background: rgba(255, 100, 50, 0.2);
+    border: 2px solid #ff6432;
+    color: #ff9966;
+}
+
+.feedback-content p {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin: 0;
+}
+
+.feedback-content img {
+    border-radius: 8px;
+    animation: shake 0.5s ease;
+}
+
+.feedback-content .btn-proximo {
+    background: rgba(0, 180, 100, 0.8);
+    border: 1px solid #00cc00;
+    color: #fff;
+    padding: 10px 20px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.feedback-content.errado .btn-proximo {
+    background: rgba(255, 100, 50, 0.8);
+    border: 1px solid #ff6432;
+}
+
+.feedback-content .btn-proximo:hover {
+    transform: scale(1.05);
+    box-shadow: 0 0 20px currentColor;
+}
+
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-8px); }
+    75% { transform: translateX(8px); }
+}
+
+.resposta-info {
+    font-size: 0.95rem;
+    opacity: 0.85;
+    margin: 15px 0;
+    padding: 12px;
+    background: rgba(255, 255, 255, 0.05);
+    border-left: 3px solid rgba(183, 248, 213, 0.5);
+    border-radius: 6px;
+}

@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JOÃO É FEIO</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial Black', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+            background-size: 400% 400%;
+            animation: gradientShift 15s ease infinite;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            overflow: hidden;
+            width: 100%;
+            height: 100%;
+        }
+
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        .container {
+            position: relative;
+            z-index: 2;
+            text-align: center;
+            padding: clamp(15px, 5vw, 30px);
+            background: rgba(0, 0, 0, 0.7);
+            border-radius: 20px;
+            box-shadow: 0 0 50px rgba(255, 0, 0, 0.8);
+            border: 3px solid #ff00ff;
+            max-width: 95vw;
+            max-height: 95vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            animation: pulse 1s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.01); }
+        }
+
+        h1 {
+            font-size: clamp(1.5rem, 8vw, 4rem);
+            color: #ff1493;
+            text-shadow: 0 0 20px #ff1493, 0 0 40px #ff00ff, 0 0 60px #ff0000;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            animation: bounce 0.5s ease-in-out infinite;
+            margin: 0 0 clamp(10px, 2vh, 15px) 0;
+            line-height: 1.1;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-20px); }
+        }
+
+        .joao-img {
+            margin: clamp(10px, 2vh, 20px) 0;
+            animation: rotate 4s linear infinite;
+            filter: drop-shadow(0 0 20px #ff1493) drop-shadow(0 0 40px #00ff00) brightness(1.1);
+            display: inline-block;
+            max-width: 100%;
+            height: auto;
+            border-radius: 20px;
+            box-shadow: 0 0 30px #ff1493;
+            max-height: 35vh;
+            object-fit: cover;
+        }
+
+        @keyframes rotate {
+            from { transform: rotateZ(0deg); }
+            to { transform: rotateZ(360deg); }
+        }
+
+        .tagline {
+            font-size: clamp(1rem, 3vw, 1.5rem);
+            color: #00ff00;
+            text-shadow: 0 0 10px #00ff00;
+            margin: clamp(8px, 1.5vh, 15px) 0;
+            animation: glitch 0.3s infinite;
+        }
+
+        @keyframes glitch {
+            0%, 100% { text-shadow: 0 0 10px #00ff00, -2px 0 #ff00ff, 2px 0 #00ffff; }
+            50% { text-shadow: 0 0 10px #00ff00, 2px 0 #ff00ff, -2px 0 #00ffff; }
+        }
+
+        .razoes {
+            margin-top: clamp(15px, 2vh, 25px);
+            font-size: clamp(0.8rem, 2vw, 1rem);
+            color: #fff;
+            line-height: 1.4;
+            text-shadow: 0 0 5px rgba(255, 0, 0, 0.5);
+            max-height: 30vh;
+            overflow-y: auto;
+        }
+
+        .razoes li {
+            list-style: none;
+            margin: clamp(8px, 1vh, 10px) 0;
+            padding: clamp(8px, 1.5vh, 12px);
+            background: rgba(255, 0, 0, 0.1);
+            border-left: 3px solid #ff1493;
+            border-radius: 5px;
+            animation: slideIn 0.5s ease backwards;
+        }
+
+        .razoes li:nth-child(1) { animation-delay: 0.1s; }
+        .razoes li:nth-child(2) { animation-delay: 0.2s; }
+        .razoes li:nth-child(3) { animation-delay: 0.3s; }
+        .razoes li:nth-child(4) { animation-delay: 0.4s; }
+        .razoes li:nth-child(5) { animation-delay: 0.5s; }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(-100px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .button {
+            margin-top: clamp(15px, 2vh, 20px);
+            padding: clamp(10px, 1.5vh, 15px) clamp(20px, 5vw, 35px);
+            font-size: clamp(0.9rem, 2vw, 1.1rem);
+            background: linear-gradient(45deg, #ff1493, #ff00ff);
+            color: white;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            text-transform: uppercase;
+            font-weight: bold;
+            box-shadow: 0 0 20px #ff1493;
+            transition: all 0.3s;
+            animation: buttonBlink 0.8s infinite;
+            white-space: nowrap;
+        }
+
+        @keyframes buttonBlink {
+            0%, 100% { box-shadow: 0 0 20px #ff1493, 0 0 40px #ff00ff; }
+            50% { box-shadow: 0 0 30px #ff1493, 0 0 60px #ff00ff, 0 0 80px #ff0000; }
+        }
+
+        .button:hover {
+            transform: scale(1.1);
+            box-shadow: 0 0 40px #ff1493, 0 0 80px #ff00ff;
+        }
+
+        .button:active {
+            transform: scale(0.95);
+        }
+
+        .texto-flutuante {
+            position: fixed;
+            font-size: 2rem;
+            font-weight: bold;
+            pointer-events: none;
+            z-index: 3;
+            animation: flutuante 3s ease-out forwards;
+        }
+
+        @keyframes flutuante {
+            0% {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+            100% {
+                opacity: 0;
+                transform: translateY(-100px) scale(0.5);
+            }
+        }
+    </style>
+</head>
+<body>
+    <canvas id="canvas"></canvas>
+    
+    <div class="container">
+        <h1>🚨 JOÃO É FEIO 🚨</h1>
+        <img src="/IMG_20240210_224054.jpg" alt="João é feio" class="joao-img" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22300%22 height=%22300%22%3E%3Crect fill=%22%23333%22 width=%22300%22 height=%22300%22/%3E%3Ctext x=%2250%25%22 y=%2250%25%22 font-size=%2240%22 fill=%22white%22 text-anchor=%22middle%22 dy=%22.3em%22%3E📸%3C/text%3E%3C/svg%3E'">
+        <p class="tagline">A verdade que o universo quer que você saiba!</p>
+        
+        <ul class="razoes">
+            <li>✨ Ele acordou assim mesmo</li>
+            <li>✨ O espelho pediu muda de endereço</li>
+            <li>✨ Até o filtro do Instagram se recusa</li>
+            <li>✨ As ovelhas fogem quando ele passa</li>
+            <li>✨ Isso é um FATO matemático comprovado</li>
+        </ul>
+
+        <button class="button" onclick="disparaFogo()">DISPARA FOGOS! 🎆</button>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        });
+
+        class Particula {
+            constructor(x, y) {
+                this.x = x;
+                this.y = y;
+                this.vx = (Math.random() - 0.5) * 15;
+                this.vy = (Math.random() - 0.5) * 15;
+                this.vida = 1;
+                this.cores = ['#ff1493', '#ff00ff', '#00ff00', '#00ffff', '#ff0000', '#ffff00'];
+                this.cor = this.cores[Math.floor(Math.random() * this.cores.length)];
+                this.tamanho = Math.random() * 5 + 2;
+            }
+
+            update() {
+                this.x += this.vx;
+                this.y += this.vy;
+                this.vy += 0.2;
+                this.vida -= 0.02;
+            }
+
+            draw() {
+                ctx.fillStyle = this.cor;
+                ctx.globalAlpha = this.vida;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.tamanho, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.globalAlpha = 1;
+            }
+        }
+
+        let particulas = [];
+
+        function disparaFogo() {
+            const x = canvas.width / 2;
+            const y = canvas.height / 2;
+            
+            for (let i = 0; i < 100; i++) {
+                particulas.push(new Particula(x, y));
+            }
+
+            for (let i = 0; i < 5; i++) {
+                setTimeout(() => {
+                    const randomX = Math.random() * canvas.width;
+                    const randomY = Math.random() * canvas.height * 0.3;
+                    for (let j = 0; j < 80; j++) {
+                        particulas.push(new Particula(randomX, randomY));
+                    }
+                }, i * 150);
+            }
+
+            criaTectoTexto();
+        }
+
+        function criaTectoTexto() {
+            const textos = ['FEIO!', '😨', 'MUITO FEIO!', '🤢', 'JOÃO!', '💔'];
+            for (let i = 0; i < 10; i++) {
+                setTimeout(() => {
+                    const texto = document.createElement('div');
+                    texto.className = 'texto-flutuante';
+                    texto.textContent = textos[Math.floor(Math.random() * textos.length)];
+                    texto.style.left = Math.random() * canvas.width + 'px';
+                    texto.style.top = Math.random() * canvas.height + 'px';
+                    texto.style.color = ['#ff1493', '#ff00ff', '#00ff00', '#00ffff'][Math.floor(Math.random() * 4)];
+                    document.body.appendChild(texto);
+                    setTimeout(() => texto.remove(), 3000);
+                }, i * 100);
+            }
+        }
+
+        function animate() {
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            particulas = particulas.filter(p => p.vida > 0);
+
+            for (const p of particulas) {
+                p.update();
+                p.draw();
+            }
+
+            requestAnimationFrame(animate);
+        }
+
+        animate();
+
+        document.addEventListener('click', (e) => {
+            for (let i = 0; i < 30; i++) {
+                particulas.push(new Particula(e.clientX, e.clientY));
+            }
+        });
+
+        setInterval(() => {
+            for (let i = 0; i < 3; i++) {
+                const x = Math.random() * canvas.width;
+                const y = Math.random() * canvas.height;
+                particulas.push(new Particula(x, y));
+            }
+        }, 500);
+    </script>
+</body>
+</html>

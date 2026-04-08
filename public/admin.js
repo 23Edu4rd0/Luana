@@ -102,24 +102,36 @@ function renderMetricas(respostas) {
     totalInfo.textContent = `Total de respostas: ${total}`;
 }
 
-function montarSeriePorDia(respostas) {
+function montarSeriePorCurso(respostas) {
     const mapa = new Map();
 
     for (const item of respostas) {
-        const data = new Date(item.criadoEm);
-        const chave = `${String(data.getDate()).padStart(2, '0')}/${String(data.getMonth() + 1).padStart(2, '0')}`;
-        mapa.set(chave, (mapa.get(chave) || 0) + 1);
+        const curso = String(item.curso || 'Nao informado').trim() || 'Nao informado';
+
+        if (!mapa.has(curso)) {
+            mapa.set(curso, { integro: 0, acidentado: 0 });
+        }
+
+        const atual = mapa.get(curso);
+        if (item.preferencia === 'ÍNTEGRO') {
+            atual.integro += 1;
+        } else if (item.preferencia === 'ACIDENTADO') {
+            atual.acidentado += 1;
+        }
     }
 
+    const cursosOrdenados = Array.from(mapa.keys()).sort((a, b) => a.localeCompare(b, 'pt-BR'));
+
     return {
-        labels: Array.from(mapa.keys()),
-        valores: Array.from(mapa.values())
+        labels: cursosOrdenados,
+        integro: cursosOrdenados.map((curso) => mapa.get(curso).integro),
+        acidentado: cursosOrdenados.map((curso) => mapa.get(curso).acidentado)
     };
 }
 
 function renderGraficos(respostas) {
     const { integro, acidentado } = calcularMetricas(respostas);
-    const porDia = montarSeriePorDia(respostas);
+    const porCurso = montarSeriePorCurso(respostas);
 
     if (graficoPreferencia) {
         graficoPreferencia.destroy();
@@ -151,22 +163,34 @@ function renderGraficos(respostas) {
     graficoDia = new Chart(graficoDiaEl, {
         type: 'bar',
         data: {
-            labels: porDia.labels,
+            labels: porCurso.labels,
             datasets: [
                 {
-                    label: 'Respostas',
-                    data: porDia.valores,
-                    backgroundColor: '#147866',
-                    borderRadius: 8
+                    label: 'ÍNTEGRO',
+                    data: porCurso.integro,
+                    backgroundColor: '#17a286',
+                    borderRadius: 8,
+                    stack: 'votos'
+                },
+                {
+                    label: 'ACIDENTADO',
+                    data: porCurso.acidentado,
+                    backgroundColor: '#f26a4b',
+                    borderRadius: 8,
+                    stack: 'votos'
                 }
             ]
         },
         options: {
             plugins: {
-                legend: { display: false }
+                legend: { display: true, position: 'bottom' }
             },
             scales: {
+                x: {
+                    stacked: true
+                },
                 y: {
+                    stacked: true,
                     beginAtZero: true,
                     ticks: { precision: 0 }
                 }

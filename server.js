@@ -119,21 +119,29 @@ async function inicializarArmazenamento() {
     return;
   }
 
-  await db.query(`
-    CREATE TABLE IF NOT EXISTS respostas (
-      id BIGSERIAL PRIMARY KEY,
-      nome TEXT NOT NULL,
-      curso TEXT,
-      preferencia TEXT NOT NULL,
-      criado_em TIMESTAMPTZ NOT NULL DEFAULT NOW()
-    )
-  `);
+  try {
+    await db.query(`
+      CREATE TABLE IF NOT EXISTS respostas (
+        id BIGSERIAL PRIMARY KEY,
+        nome TEXT NOT NULL,
+        email TEXT,
+        preferencia TEXT NOT NULL,
+        criado_em TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      )
+    `);
 
-  await db.query('ALTER TABLE respostas ADD COLUMN IF NOT EXISTS curso TEXT');
-  await db.query('UPDATE respostas SET curso = email WHERE (curso IS NULL OR curso = \'\') AND email IS NOT NULL');
+    await db.query('ALTER TABLE respostas ADD COLUMN IF NOT EXISTS curso TEXT');
+    
+    await db.query('UPDATE respostas SET curso = email WHERE (curso IS NULL OR curso = \'\') AND email IS NOT NULL');
 
-  await db.query('CREATE INDEX IF NOT EXISTS idx_respostas_criado_em ON respostas (criado_em DESC)');
-  await db.query('CREATE INDEX IF NOT EXISTS idx_respostas_curso ON respostas (curso)');
+    await db.query('CREATE INDEX IF NOT EXISTS idx_respostas_criado_em ON respostas (criado_em DESC)');
+    await db.query('CREATE INDEX IF NOT EXISTS idx_respostas_curso ON respostas (curso)');
+
+    console.log('[DB] Inicializacao concluida com sucesso.');
+  } catch (erro) {
+    console.error('[DB] Erro na inicializacao:', erro.message);
+    throw erro;
+  }
 }
 
 async function listarRespostas() {
@@ -263,6 +271,7 @@ app.post('/api/respostas', async (req, res) => {
 
     return res.status(201).json({ mensagem: 'Resposta salva com sucesso.' });
   } catch (erro) {
+    console.error('[POST /api/respostas] Erro:', erro.message);
     return res.status(500).json({ mensagem: 'Erro interno ao salvar resposta.' });
   }
 });
@@ -281,6 +290,7 @@ app.post('/api/admin/respostas', exigeAdmin, async (req, res) => {
 
     return res.status(201).json({ mensagem: 'Resposta criada com sucesso.', registro });
   } catch (erro) {
+    console.error('[POST /api/admin/respostas] Erro:', erro.message);
     return res.status(500).json({ mensagem: 'Erro interno ao criar resposta.' });
   }
 });
@@ -308,6 +318,7 @@ app.put('/api/admin/respostas/:id', exigeAdmin, async (req, res) => {
 
     return res.json({ mensagem: 'Resposta atualizada com sucesso.', registro });
   } catch (erro) {
+    console.error('[PUT /api/admin/respostas/:id] Erro:', erro.message);
     return res.status(500).json({ mensagem: 'Erro interno ao atualizar resposta.' });
   }
 });
@@ -328,6 +339,7 @@ app.delete('/api/admin/respostas/:id', exigeAdmin, async (req, res) => {
 
     return res.json({ mensagem: 'Resposta excluida com sucesso.' });
   } catch (erro) {
+    console.error('[DELETE /api/admin/respostas/:id] Erro:', erro.message);
     return res.status(500).json({ mensagem: 'Erro interno ao excluir resposta.' });
   }
 });
@@ -362,6 +374,7 @@ app.get('/api/respostas', exigeAdmin, async (req, res) => {
     const respostas = await listarRespostas();
     return res.json({ total: respostas.length, respostas });
   } catch (erro) {
+    console.error('[GET /api/respostas] Erro:', erro.message);
     return res.status(500).json({ mensagem: 'Erro interno ao listar respostas.' });
   }
 });

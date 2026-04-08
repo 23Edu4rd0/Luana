@@ -25,7 +25,7 @@ const editErro = document.getElementById('editErro');
 const cancelarEdicao = document.getElementById('cancelarEdicao');
 const graficoPreferenciaEl = document.getElementById('graficoPreferencia');
 const graficoDiaEl = document.getElementById('graficoDia');
-const API_BASE = window.location.port === '43123' ? '' : 'http://localhost:43123';
+const API_BASE = '';
 
 let respostasState = [];
 let editandoId = null;

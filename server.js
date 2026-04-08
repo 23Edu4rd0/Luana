@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const session = require('express-session');
+const { Pool } = require('pg');
 const fs = require('fs/promises');
 const path = require('path');
 require('dotenv').config();
@@ -9,13 +10,33 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'admin123';
 const SESSION_SECRET = process.env.SESSION_SECRET || 'mude-este-segredo';
+const NODE_ENV = process.env.NODE_ENV || 'development';
+const isProduction = NODE_ENV === 'production';
+const DATABASE_URL = process.env.DATABASE_URL;
+const useDatabase = Boolean(DATABASE_URL);
+const dbSsl = process.env.DATABASE_SSL === 'false' ? false : { rejectUnauthorized: false };
+const db = useDatabase
+  ? new Pool({
+      connectionString: DATABASE_URL,
+      ssl: dbSsl
+    })
+  : null;
 const respostasPath = path.join(__dirname, 'data', 'respostas.json');
-const allowedOrigins = [
+const defaultAllowedOrigins = [
   'http://localhost:3000',
   'http://127.0.0.1:3000',
   'http://localhost:43123',
   'http://127.0.0.1:43123'
 ];
+const allowedOriginsFromEnv = (process.env.ALLOWED_ORIGINS || '')
+  .split(',')
+  .map((origin) => origin.trim())
+  .filter(Boolean);
+const allowedOrigins = Array.from(new Set([...defaultAllowedOrigins, ...allowedOriginsFromEnv]));
+
+if (isProduction) {
+  app.set('trust proxy', 1);
+}
 
 app.use(express.json());
 app.use(
@@ -37,12 +58,21 @@ app.use(
     cookie: {
       httpOnly: true,
       sameSite: 'lax',
+      secure: isProduction,
       maxAge: 1000 * 60 * 60 * 6
     }
   })
 );
 
 app.use(express.static(path.join(__dirname, 'public')));
+
+function normalizarRespostaEntrada({ nome, email, preferencia }) {
+  return {
+    nome: String(nome).trim(),
+    email: String(email).trim().toLowerCase(),
+    preferencia: String(preferencia).trim()
+  };
+}
 
 async function garantirArquivoRespostas() {
   try {
@@ -61,6 +91,124 @@ async function lerRespostas() {
 
 async function salvarRespostas(respostas) {
   await fs.writeFile(respostasPath, JSON.stringify(respostas, null, 2), 'utf8');
+}
+
+function mapearRegistroDb(row) {
+  return {
+    id: Number(row.id),
+    nome: row.nome,
+    email: row.email,
+    preferencia: row.preferencia,
+    criadoEm: new Date(row.criado_em).toISOString()
+  };
+}
+
+async function inicializarArmazenamento() {
+  if (!useDatabase) {
+    await garantirArquivoRespostas();
+    return;
+  }
+
+  await db.query(`
+    CREATE TABLE IF NOT EXISTS respostas (
+      id BIGSERIAL PRIMARY KEY,
+      nome TEXT NOT NULL,
+      email TEXT NOT NULL,
+      preferencia TEXT NOT NULL,
+      criado_em TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )
+  `);
+
+  await db.query('CREATE INDEX IF NOT EXISTS idx_respostas_criado_em ON respostas (criado_em DESC)');
+  await db.query('CREATE INDEX IF NOT EXISTS idx_respostas_email ON respostas (email)');
+}
+
+async function listarRespostas() {
+  if (!useDatabase) {
+    return lerRespostas();
+  }
+
+  const resultado = await db.query(
+    'SELECT id, nome, email, preferencia, criado_em FROM respostas ORDER BY criado_em DESC'
+  );
+  return resultado.rows.map(mapearRegistroDb);
+}
+
+async function inserirResposta({ nome, email, preferencia }) {
+  const entrada = normalizarRespostaEntrada({ nome, email, preferencia });
+
+  if (!useDatabase) {
+    const respostas = await lerRespostas();
+    const registro = criarRegistro(entrada);
+    respostas.push(registro);
+    await salvarRespostas(respostas);
+    return registro;
+  }
+
+  const resultado = await db.query(
+    `INSERT INTO respostas (nome, email, preferencia)
+     VALUES ($1, $2, $3)
+     RETURNING id, nome, email, preferencia, criado_em`,
+    [entrada.nome, entrada.email, entrada.preferencia]
+  );
+
+  return mapearRegistroDb(resultado.rows[0]);
+}
+
+async function atualizarResposta(id, { nome, email, preferencia }) {
+  const entrada = normalizarRespostaEntrada({ nome, email, preferencia });
+
+  if (!useDatabase) {
+    const respostas = await lerRespostas();
+    const index = respostas.findIndex((item) => Number(item.id) === id);
+
+    if (index === -1) {
+      return null;
+    }
+
+    respostas[index] = criarRegistro({
+      id,
+      nome: entrada.nome,
+      email: entrada.email,
+      preferencia: entrada.preferencia,
+      criadoEm: respostas[index].criadoEm
+    });
+
+    await salvarRespostas(respostas);
+    return respostas[index];
+  }
+
+  const resultado = await db.query(
+    `UPDATE respostas
+     SET nome = $1, email = $2, preferencia = $3
+     WHERE id = $4
+     RETURNING id, nome, email, preferencia, criado_em`,
+    [entrada.nome, entrada.email, entrada.preferencia, id]
+  );
+
+  if (resultado.rowCount === 0) {
+    return null;
+  }
+
+  return mapearRegistroDb(resultado.rows[0]);
+}
+
+async function excluirResposta(id) {
+  if (!useDatabase) {
+    const respostas = await lerRespostas();
+    const index = respostas.findIndex((item) => Number(item.id) === id);
+
+    if (index === -1) {
+      return false;
+    }
+
+    respostas.splice(index, 1);
+    await salvarRespostas(respostas);
+    return true;
+  }
+
+  const resultado = await db.query('DELETE FROM respostas WHERE id = $1', [id]);
+  return resultado.rowCount > 0;
 }
 
 function validarRespostaEntrada(nome, email, preferencia) {
@@ -97,11 +245,7 @@ app.post('/api/respostas', async (req, res) => {
       return res.status(400).json({ mensagem: erroValidacao });
     }
 
-    const registro = criarRegistro({ nome, email, preferencia });
-
-    const respostas = await lerRespostas();
-    respostas.push(registro);
-    await salvarRespostas(respostas);
+    await inserirResposta({ nome, email, preferencia });
 
     return res.status(201).json({ mensagem: 'Resposta salva com sucesso.' });
   } catch (erro) {
@@ -118,10 +262,7 @@ app.post('/api/admin/respostas', exigeAdmin, async (req, res) => {
       return res.status(400).json({ mensagem: erroValidacao });
     }
 
-    const respostas = await lerRespostas();
-    const registro = criarRegistro({ nome, email, preferencia });
-    respostas.push(registro);
-    await salvarRespostas(respostas);
+    const registro = await inserirResposta({ nome, email, preferencia });
 
     return res.status(201).json({ mensagem: 'Resposta criada com sucesso.', registro });
   } catch (erro) {
@@ -143,23 +284,13 @@ app.put('/api/admin/respostas/:id', exigeAdmin, async (req, res) => {
       return res.status(400).json({ mensagem: erroValidacao });
     }
 
-    const respostas = await lerRespostas();
-    const index = respostas.findIndex((item) => Number(item.id) === id);
+    const registro = await atualizarResposta(id, { nome, email, preferencia });
 
-    if (index === -1) {
+    if (!registro) {
       return res.status(404).json({ mensagem: 'Resposta nao encontrada.' });
     }
 
-    respostas[index] = criarRegistro({
-      id,
-      nome,
-      email,
-      preferencia,
-      criadoEm: respostas[index].criadoEm
-    });
-
-    await salvarRespostas(respostas);
-    return res.json({ mensagem: 'Resposta atualizada com sucesso.', registro: respostas[index] });
+    return res.json({ mensagem: 'Resposta atualizada com sucesso.', registro });
   } catch (erro) {
     return res.status(500).json({ mensagem: 'Erro interno ao atualizar resposta.' });
   }
@@ -173,15 +304,11 @@ app.delete('/api/admin/respostas/:id', exigeAdmin, async (req, res) => {
       return res.status(400).json({ mensagem: 'ID invalido.' });
     }
 
-    const respostas = await lerRespostas();
-    const index = respostas.findIndex((item) => Number(item.id) === id);
+    const excluiu = await excluirResposta(id);
 
-    if (index === -1) {
+    if (!excluiu) {
       return res.status(404).json({ mensagem: 'Resposta nao encontrada.' });
     }
-
-    respostas.splice(index, 1);
-    await salvarRespostas(respostas);
 
     return res.json({ mensagem: 'Resposta excluida com sucesso.' });
   } catch (erro) {
@@ -216,15 +343,16 @@ app.get('/api/me', (req, res) => {
 
 app.get('/api/respostas', exigeAdmin, async (req, res) => {
   try {
-    const respostas = await lerRespostas();
+    const respostas = await listarRespostas();
     return res.json({ total: respostas.length, respostas });
   } catch (erro) {
     return res.status(500).json({ mensagem: 'Erro interno ao listar respostas.' });
   }
 });
 
-garantirArquivoRespostas().then(() => {
+inicializarArmazenamento().then(() => {
   app.listen(PORT, () => {
-    console.log(`Servidor rodando em http://localhost:${PORT}`);
+    const modoPersistencia = useDatabase ? 'postgres' : 'json-local';
+    console.log(`Servidor rodando na porta ${PORT} (${NODE_ENV}) - persistencia: ${modoPersistencia}`);
   });
 });

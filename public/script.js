@@ -5,7 +5,7 @@ const formularioDados = document.getElementById('formularioDados');
 const formularioPergunta = document.getElementById('formularioPergunta');
 const successMessage = document.getElementById('successMessage');
 const errorMessage = document.getElementById('errorMessage');
-const API_BASE = window.location.port === '43123' ? '' : 'http://localhost:43123';
+const API_BASE = '';
 
 let dadosUsuario = {};
 

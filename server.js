@@ -28,11 +28,19 @@ const defaultAllowedOrigins = [
   'http://localhost:43123',
   'http://127.0.0.1:43123'
 ];
+const renderExternalUrl = process.env.RENDER_EXTERNAL_URL || '';
+
+function normalizarOrigem(origin) {
+  return String(origin || '').trim().replace(/\/$/, '');
+}
+
 const allowedOriginsFromEnv = (process.env.ALLOWED_ORIGINS || '')
   .split(',')
-  .map((origin) => origin.trim())
+  .map(normalizarOrigem)
   .filter(Boolean);
-const allowedOrigins = Array.from(new Set([...defaultAllowedOrigins, ...allowedOriginsFromEnv]));
+const allowedOrigins = Array.from(
+  new Set([...defaultAllowedOrigins.map(normalizarOrigem), normalizarOrigem(renderExternalUrl), ...allowedOriginsFromEnv])
+).filter(Boolean);
 
 if (isProduction) {
   app.set('trust proxy', 1);
@@ -42,7 +50,8 @@ app.use(express.json());
 app.use(
   cors({
     origin: (origin, callback) => {
-      if (!origin || allowedOrigins.includes(origin)) {
+      const origemNormalizada = normalizarOrigem(origin);
+      if (!origin || allowedOrigins.includes(origemNormalizada)) {
         return callback(null, true);
       }
       return callback(new Error('Origem nao permitida pelo CORS.'));

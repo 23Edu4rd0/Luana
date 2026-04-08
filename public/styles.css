@@ -380,9 +380,22 @@ input[type="email"]:focus {
     opacity: 1;
 }
 
+.piada-rodape {
+    margin: 8px 0 0;
+    font-size: 0.78rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    color: #355650;
+    text-align: center;
+}
+
 @media (max-width: 900px) {
     .admin-link {
         display: none;
+    }
+
+    .piada-rodape {
+        font-size: 0.7rem;
     }
 }
 

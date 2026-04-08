@@ -10,7 +10,6 @@ const formularioPergunta2 = document.getElementById('formularioPergunta2');
 const formularioPergunta3 = document.getElementById('formularioPergunta3');
 const formularioPergunta4 = document.getElementById('formularioPergunta4');
 const formularioPergunta5 = document.getElementById('formularioPergunta5');
-const responderNovamente = document.getElementById('responderNovamente');
 const feedbackTitulo = document.getElementById('feedbackTitulo');
 const feedbackContent = document.getElementById('feedbackContent');
 const feedbackTexto = document.getElementById('feedbackTexto');
@@ -242,28 +241,6 @@ feedbackProximo.addEventListener('click', async () => {
     } catch (erro) {
         console.error('Erro ao avancar apos feedback:', erro);
     }
-});
-
-responderNovamente.addEventListener('click', function() {
-    dadosUsuario = {
-        nome: '',
-        curso: '',
-        abrilVerde: '',
-        atitudes: '',
-        risco: '',
-        responsabilidade: '',
-        preferencia: ''
-    };
-    etagaAtual = 'etapa1';
-    historicoEtapas.length = 0;
-    mostrarEtapa('etapa1', false);
-    formularioDados.reset();
-    formularioPergunta2.reset();
-    formularioPergunta3.reset();
-    formularioPergunta4.reset();
-    formularioPergunta5.reset();
-    proximaEtapaAposFeedback = null;
-    acaoAposFeedback = null;
 });
 
 // Fazer cards clicáveis

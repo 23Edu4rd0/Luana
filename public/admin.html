@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - Respostas</title>
+    <link rel="icon" href="data:,">
+    <link rel="stylesheet" href="admin.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <main class="container">
+        <section id="loginBox" class="card">
+            <p class="kicker">Painel protegido</p>
+            <h1>Area administrativa</h1>
+            <p>Digite a senha para ver e gerenciar as respostas.</p>
+            <form id="loginForm">
+                <input id="senha" type="password" placeholder="Senha" required>
+                <button type="submit">Entrar</button>
+            </form>
+            <p id="loginErro" class="erro"></p>
+        </section>
+
+        <section id="painel" class="card hidden">
+            <div class="painel-topo card">
+                <div>
+                    <p class="kicker">Dashboard</p>
+                    <h2>Respostas recebidas</h2>
+                </div>
+                <div class="acoes-topo">
+                    <button id="refreshBtn" class="secundario">Atualizar</button>
+                    <button id="logoutBtn" class="secundario">Sair</button>
+                </div>
+            </div>
+
+            <div class="metricas">
+                <article class="card metrica">
+                    <p class="metrica-label">Total</p>
+                    <h3 id="mTotal">0</h3>
+                </article>
+                <article class="card metrica">
+                    <p class="metrica-label">Integro</p>
+                    <h3 id="mIntegro">0</h3>
+                </article>
+                <article class="card metrica">
+                    <p class="metrica-label">Acidentado</p>
+                    <h3 id="mAcidentado">0</h3>
+                </article>
+            </div>
+
+            <div class="graficos">
+                <article class="card grafico-card">
+                    <h3>Distribuicao de preferencia</h3>
+                    <canvas id="graficoPreferencia"></canvas>
+                </article>
+                <article class="card grafico-card">
+                    <h3>Respostas por dia</h3>
+                    <canvas id="graficoDia"></canvas>
+                </article>
+            </div>
+
+            <section class="card bloco-crud">
+                <h3>Criar resposta manual</h3>
+                <form id="criarForm" class="crud-form">
+                    <input id="novoNome" type="text" placeholder="Nome" required>
+                    <input id="novoEmail" type="email" placeholder="Email" required>
+                    <select id="novaPreferencia" required>
+                        <option value="">Selecione</option>
+                        <option value="ÍNTEGRO">ÍNTEGRO</option>
+                        <option value="ACIDENTADO">ACIDENTADO</option>
+                    </select>
+                    <button type="submit">Criar</button>
+                </form>
+                <p id="crudInfo" class="info"></p>
+            </section>
+
+            <section class="card bloco-tabela">
+                <div class="tabela-cabecalho">
+                    <h3>Registros</h3>
+                    <p id="totalInfo"></p>
+                </div>
+                <div class="tabela-wrap">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Nome</th>
+                                <th>Email</th>
+                                <th>Preferencia</th>
+                                <th>Data</th>
+                                <th>Acoes</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tabelaBody"></tbody>
+                    </table>
+                </div>
+            </section>
+            <div id="tabelaVazia" class="card tabela-vazia hidden">Nenhuma resposta cadastrada.</div>
+        </section>
+
+        <dialog id="editModal" class="modal">
+            <form id="editForm" class="modal-conteudo">
+                <h3>Editar resposta</h3>
+                <input id="editNome" type="text" required>
+                <input id="editEmail" type="email" required>
+                <select id="editPreferencia" required>
+                    <option value="ÍNTEGRO">ÍNTEGRO</option>
+                    <option value="ACIDENTADO">ACIDENTADO</option>
+                </select>
+                <div class="modal-acoes">
+                    <button type="button" id="cancelarEdicao" class="secundario">Cancelar</button>
+                    <button type="submit">Salvar</button>
+                </div>
+                <p id="editErro" class="erro"></p>
+            </form>
+        </dialog>
+    </main>
+
+    <script src="admin.js"></script>
+</body>
+</html>

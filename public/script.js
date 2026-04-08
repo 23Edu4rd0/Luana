@@ -1,0 +1,92 @@
+// Elementos do DOM
+const etapa1 = document.getElementById('etapa1');
+const etapa2 = document.getElementById('etapa2');
+const formularioDados = document.getElementById('formularioDados');
+const formularioPergunta = document.getElementById('formularioPergunta');
+const successMessage = document.getElementById('successMessage');
+const errorMessage = document.getElementById('errorMessage');
+const API_BASE = window.location.port === '43123' ? '' : 'http://localhost:43123';
+
+let dadosUsuario = {};
+
+async function lerJsonSeguro(resposta) {
+    const texto = await resposta.text();
+
+    if (!texto) {
+        return {};
+    }
+
+    try {
+        return JSON.parse(texto);
+    } catch {
+        return {};
+    }
+}
+
+function apiFetch(caminho, opcoes = {}) {
+    return fetch(`${API_BASE}${caminho}`, {
+        ...opcoes,
+        credentials: 'include'
+    });
+}
+
+// ========== ETAPA 1: Validar dados pessoais ==========
+formularioDados.addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    // Capturar dados
+    dadosUsuario.nome = document.getElementById('nome').value;
+    dadosUsuario.email = document.getElementById('email').value;
+    
+    // Ir para etapa 2
+    irParaEtapa2();
+});
+
+// ========== ETAPA 2: Enviar resposta ==========
+formularioPergunta.addEventListener('submit', async function(e) {
+    e.preventDefault();
+
+    // Capturar preferência
+    dadosUsuario.preferencia = document.querySelector('input[name="preferencia"]:checked').value;
+    successMessage.style.display = 'none';
+    errorMessage.style.display = 'none';
+
+    try {
+        const resposta = await apiFetch('/api/respostas', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(dadosUsuario)
+        });
+
+        const payload = await lerJsonSeguro(resposta);
+
+        if (!resposta.ok) {
+            throw new Error(payload.mensagem || 'Nao foi possivel enviar.');
+        }
+
+        successMessage.style.display = 'block';
+        formularioPergunta.reset();
+
+        setTimeout(function() {
+            successMessage.style.display = 'none';
+            voltarEtapa();
+        }, 3000);
+    } catch (erro) {
+        errorMessage.textContent = erro.message;
+        errorMessage.style.display = 'block';
+    }
+});
+
+// ========== Funções de navegação ==========
+function irParaEtapa2() {
+    etapa1.classList.remove('ativo');
+    etapa2.classList.add('ativo');
+}
+
+function voltarEtapa() {
+    etapa1.classList.add('ativo');
+    etapa2.classList.remove('ativo');
+    formularioDados.reset();
+}

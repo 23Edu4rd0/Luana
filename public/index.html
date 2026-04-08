@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Formulário - Preferência de Chegada em Casa</title>
+    <link rel="icon" href="data:,">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <!-- Etapa 1: Dados Pessoais -->
+    <div id="etapa1" class="etapa ativo">
+        <div class="container-form">
+            <p class="kicker">Etapa 1 de 2</p>
+            <h1>Dados Pessoais</h1>
+            <p class="subtitle">Preencha seus dados para começar</p>
+            
+            <form id="formularioDados">
+                <div class="form-group">
+                    <label for="nome">Nome completo *</label>
+                    <input 
+                        type="text" 
+                        id="nome" 
+                        name="nome" 
+                        placeholder="Digite seu nome" 
+                        required
+                    >
+                </div>
+                
+                <div class="form-group">
+                    <label for="email">Email *</label>
+                    <input 
+                        type="email" 
+                        id="email" 
+                        name="email" 
+                        placeholder="seu.email@exemplo.com" 
+                        required
+                    >
+                </div>
+                
+                <button type="submit" class="btn-proxima">Próxima Etapa</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Etapa 2: Pergunta Principal -->
+    <div id="etapa2" class="etapa">
+        <div class="container-principal">
+            <p class="kicker kicker-light">Etapa 2 de 2</p>
+            <h1 class="titulo-pergunta">Como você gostaria de voltar para casa?</h1>
+            
+            <form id="formularioPergunta">
+                <div class="opcoes-container">
+                    <!-- Opção 1: Íntegro -->
+                    <div class="card-opcao">
+                        <input 
+                            type="radio" 
+                            id="integro" 
+                            name="preferencia" 
+                            value="ÍNTEGRO" 
+                            required
+                        >
+                        <div class="numero">1.</div>
+                        <div class="icone-opcao">
+                            <i class="fas fa-user-check"></i>
+                        </div>
+                        <label for="integro" class="label-opcao">
+                            <span class="texto-opcao">ÍNTEGRO</span>
+                        </label>
+                    </div>
+
+                    <!-- Opção 2: Acidentado -->
+                    <div class="card-opcao">
+                        <input 
+                            type="radio" 
+                            id="acidentado" 
+                            name="preferencia" 
+                            value="ACIDENTADO" 
+                            required
+                        >
+                        <div class="numero">2.</div>
+                        <div class="icone-opcao acidentado">
+                            <i class="fas fa-user-injured"></i>
+                        </div>
+                        <label for="acidentado" class="label-opcao">
+                            <span class="texto-opcao acidentado-texto">ACIDENTADO</span>
+                        </label>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn-enviar">Enviar Resposta</button>
+                <button type="button" class="btn-voltar" onclick="voltarEtapa()">Voltar</button>
+
+                <div class="success-message" id="successMessage">
+                    ✓ Obrigado! Suas respostas foram registradas com sucesso.
+                </div>
+                <div class="error-message" id="errorMessage"></div>
+            </form>
+        </div>
+    </div>
+
+    <a class="admin-link" href="admin.html">Abrir painel administrativo</a>
+    
+    <script src="script.js"></script>
+</body>
+</html>

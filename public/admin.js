@@ -8,37 +8,96 @@ const totalInfo = document.getElementById('totalInfo');
 const logoutBtn = document.getElementById('logoutBtn');
 const refreshBtn = document.getElementById('refreshBtn');
 const mTotal = document.getElementById('mTotal');
-const mIntegro = document.getElementById('mIntegro');
-const mAcidentado = document.getElementById('mAcidentado');
-const criarForm = document.getElementById('criarForm');
-const novoNome = document.getElementById('novoNome');
-const novoCurso = document.getElementById('novoCurso');
-const novaPreferencia = document.getElementById('novaPreferencia');
-const novoAbrilVerde = document.getElementById('novoAbrilVerde');
-const novaAtitudes = document.getElementById('novaAtitudes');
-const novoRisco = document.getElementById('novoRisco');
-const novaResponsabilidade = document.getElementById('novaResponsabilidade');
+const mAbrilSim = document.getElementById('mAbrilSim');
+const mAtitudesSim = document.getElementById('mAtitudesSim');
+const mAderencia = document.getElementById('mAderencia');
 const crudInfo = document.getElementById('crudInfo');
 const tabelaVazia = document.getElementById('tabelaVazia');
-const editModal = document.getElementById('editModal');
-const editForm = document.getElementById('editForm');
-const editNome = document.getElementById('editNome');
-const editCurso = document.getElementById('editCurso');
-const editPreferencia = document.getElementById('editPreferencia');
-const editAbrilVerde = document.getElementById('editAbrilVerde');
-const editAtitudes = document.getElementById('editAtitudes');
-const editRisco = document.getElementById('editRisco');
-const editResponsabilidade = document.getElementById('editResponsabilidade');
-const editErro = document.getElementById('editErro');
-const cancelarEdicao = document.getElementById('cancelarEdicao');
-const graficoPreferenciaEl = document.getElementById('graficoPreferencia');
-const graficoDiaEl = document.getElementById('graficoDia');
-const API_BASE = '';
 
-let respostasState = [];
-let editandoId = null;
-let graficoPreferencia = null;
-let graficoDia = null;
+const graficoCursosTotalEl = document.getElementById('graficoCursosTotal');
+const graficoAtitudesEl = document.getElementById('graficoAtitudes');
+const graficoAbrilVerdeEl = document.getElementById('graficoAbrilVerde');
+const graficoRiscoEl = document.getElementById('graficoRisco');
+const graficoResponsabilidadeEl = document.getElementById('graficoResponsabilidade');
+
+const API_BASE = '';
+const chartInstances = [];
+
+function limparGrafico() {
+    while (chartInstances.length > 0) {
+        const grafico = chartInstances.pop();
+        grafico.destroy();
+    }
+}
+
+function criarGrafico(ctx, config) {
+    const grafico = new Chart(ctx, config);
+    chartInstances.push(grafico);
+    return grafico;
+}
+
+function normalizarTexto(valor, fallback = 'NAO INFORMADO') {
+    const texto = String(valor || '').trim();
+    return texto || fallback;
+}
+
+function normalizarResposta(valor) {
+    return normalizarTexto(valor, '')
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toUpperCase();
+}
+
+function valorEhSim(valor) {
+    return normalizarResposta(valor) === 'SIM';
+}
+
+function valorEhNao(valor) {
+    return normalizarResposta(valor) === 'NAO';
+}
+
+function scoreResposta(item) {
+    let score = 0;
+    if (valorEhSim(item.abrilVerde)) {
+        score += 1;
+    }
+    if (valorEhSim(item.atitudes)) {
+        score += 1;
+    }
+    if (normalizarResposta(item.risco) === 'AVISARIA') {
+        score += 1;
+    }
+    if (normalizarResposta(item.responsabilidade) === 'AMBOS') {
+        score += 1;
+    }
+    return score;
+}
+
+function montarResumoCurso(respostas) {
+    const mapa = new Map();
+
+    for (const item of respostas) {
+        const curso = normalizarTexto(item.curso);
+        if (!mapa.has(curso)) {
+            mapa.set(curso, { total: 0, perfeitas: 0 });
+        }
+
+        const atual = mapa.get(curso);
+        atual.total += 1;
+        if (scoreResposta(item) === 4) {
+            atual.perfeitas += 1;
+        }
+    }
+
+    const labels = Array.from(mapa.keys()).sort((a, b) => a.localeCompare(b, 'pt-BR'));
+    const total = labels.map((curso) => mapa.get(curso).total);
+    const aderencia = labels.map((curso) => {
+        const dado = mapa.get(curso);
+        return dado.total ? Number(((dado.perfeitas / dado.total) * 100).toFixed(1)) : 0;
+    });
+
+    return { labels, total, aderencia };
+}
 
 async function lerJsonSeguro(resposta) {
     const texto = await resposta.text();
@@ -92,119 +151,139 @@ async function carregarRespostas() {
     return dados.respostas || [];
 }
 
-function calcularMetricas(respostas) {
-    const integro = respostas.filter((item) => item.preferencia === 'ÍNTEGRO').length;
-    const acidentado = respostas.filter((item) => item.preferencia === 'ACIDENTADO').length;
-    return {
-        total: respostas.length,
-        integro,
-        acidentado
-    };
-}
-
 function renderMetricas(respostas) {
-    const { total, integro, acidentado } = calcularMetricas(respostas);
-    mTotal.textContent = String(total);
-    mIntegro.textContent = String(integro);
-    mAcidentado.textContent = String(acidentado);
-    totalInfo.textContent = `Total de respostas: ${total}`;
-}
+  console.log("Exemplo de resposta:", respostas[0]); // <-- adiciona isso
+  const total = respostas.length;
+  const abrilSim = respostas.filter((item) =>
+    valorEhSim(item.abrilVerde),
+  ).length;
+  const atitudesSim = respostas.filter((item) =>
+    valorEhSim(item.atitudes),
+  ).length;
+  const perfeitas = respostas.filter(
+    (item) => scoreResposta(item) === 4,
+  ).length;
+  const aderencia = total === 0 ? 0 : Math.round((perfeitas / total) * 100);
 
-function montarSeriePorCurso(respostas) {
-    const mapa = new Map();
-
-    for (const item of respostas) {
-        const curso = String(item.curso || 'Nao informado').trim() || 'Nao informado';
-
-        if (!mapa.has(curso)) {
-            mapa.set(curso, { integro: 0, acidentado: 0 });
-        }
-
-        const atual = mapa.get(curso);
-        if (item.preferencia === 'ÍNTEGRO') {
-            atual.integro += 1;
-        } else if (item.preferencia === 'ACIDENTADO') {
-            atual.acidentado += 1;
-        }
-    }
-
-    const cursosOrdenados = Array.from(mapa.keys()).sort((a, b) => a.localeCompare(b, 'pt-BR'));
-
-    return {
-        labels: cursosOrdenados,
-        integro: cursosOrdenados.map((curso) => mapa.get(curso).integro),
-        acidentado: cursosOrdenados.map((curso) => mapa.get(curso).acidentado)
-    };
+  mTotal.textContent = String(total);
+  mAbrilSim.textContent = String(abrilSim);
+  mAtitudesSim.textContent = String(atitudesSim);
+  mAderencia.textContent = `${aderencia}%`;
+  totalInfo.textContent = `Total de respostas: ${total}`;
 }
 
 function renderGraficos(respostas) {
-    const { integro, acidentado } = calcularMetricas(respostas);
-    const porCurso = montarSeriePorCurso(respostas);
+    limparGrafico();
 
-    if (graficoPreferencia) {
-        graficoPreferencia.destroy();
-    }
+    const abrilSim = respostas.filter((item) => valorEhSim(item.abrilVerde)).length;
+    const abrilNao = respostas.filter((item) => valorEhNao(item.abrilVerde)).length;
+    const atitudesSim = respostas.filter((item) => valorEhSim(item.atitudes)).length;
+    const atitudesNao = respostas.filter((item) => valorEhNao(item.atitudes)).length;
 
-    if (graficoDia) {
-        graficoDia.destroy();
-    }
+    const riscoIgnoraria = respostas.filter((item) => normalizarResposta(item.risco) === 'IGNORARIA').length;
+    const riscoAvisaria = respostas.filter((item) => normalizarResposta(item.risco) === 'AVISARIA').length;
+    const riscoTentaria = respostas.filter((item) => normalizarResposta(item.risco) === 'TENTARIA').length;
 
-    graficoPreferencia = new Chart(graficoPreferenciaEl, {
-        type: 'doughnut',
+    const respEmpresa = respostas.filter((item) => normalizarResposta(item.responsabilidade) === 'EMPRESA').length;
+    const respTrabalhador = respostas.filter((item) => normalizarResposta(item.responsabilidade) === 'TRABALHADOR').length;
+    const respAmbos = respostas.filter((item) => normalizarResposta(item.responsabilidade) === 'AMBOS').length;
+
+    const porCurso = montarResumoCurso(respostas);
+
+    criarGrafico(graficoCursosTotalEl, {
+        type: 'bar',
         data: {
-            labels: ['ÍNTEGRO', 'ACIDENTADO'],
+            labels: porCurso.labels,
             datasets: [
                 {
-                    data: [integro, acidentado],
+                    label: 'Respostas',
+                    data: porCurso.total,
+                    backgroundColor: '#3e7d73',
+                    borderRadius: 8
+                }
+            ]
+        },
+        options: {
+            plugins: { legend: { display: false } },
+            scales: {
+                y: { beginAtZero: true, ticks: { precision: 0 } }
+            }
+        }
+    });
+
+    criarGrafico(graficoAtitudesEl, {
+        type: 'doughnut',
+        data: {
+            labels: ['SIM', 'NÃO'],
+            datasets: [
+                {
+                    data: [atitudesSim, atitudesNao],
                     backgroundColor: ['#17a286', '#f26a4b'],
                     borderWidth: 0
                 }
             ]
         },
         options: {
-            plugins: {
-                legend: { position: 'bottom' }
-            }
+            plugins: { legend: { position: 'bottom' } }
         }
     });
 
-    graficoDia = new Chart(graficoDiaEl, {
-        type: 'bar',
+    // 3o grafico: conhecimento sobre Abril Verde.
+    criarGrafico(graficoAbrilVerdeEl, {
+        type: 'doughnut',
         data: {
-            labels: porCurso.labels,
+            labels: ['SIM', 'NÃO'],
             datasets: [
                 {
-                    label: 'ÍNTEGRO',
-                    data: porCurso.integro,
-                    backgroundColor: '#17a286',
-                    borderRadius: 8,
-                    stack: 'votos'
-                },
-                {
-                    label: 'ACIDENTADO',
-                    data: porCurso.acidentado,
-                    backgroundColor: '#f26a4b',
-                    borderRadius: 8,
-                    stack: 'votos'
+                    data: [abrilSim, abrilNao],
+                    backgroundColor: ['#17a286', '#f26a4b'],
+                    borderWidth: 0
                 }
             ]
         },
         options: {
-            plugins: {
-                legend: { display: true, position: 'bottom' }
-            },
-            scales: {
-                x: {
-                    stacked: true
-                },
-                y: {
-                    stacked: true,
-                    beginAtZero: true,
-                    ticks: { precision: 0 }
+            plugins: { legend: { position: 'bottom' } }
+        }
+    });
+
+    criarGrafico(graficoRiscoEl, {
+        type: 'bar',
+        data: {
+            labels: ['IGNORARIA', 'AVISARIA', 'TENTARIA'],
+            datasets: [
+                {
+                    label: 'Qtd respostas',
+                    data: [riscoIgnoraria, riscoAvisaria, riscoTentaria],
+                    backgroundColor: ['#74809a', '#17a286', '#5f87c2'],
+                    borderRadius: 8
                 }
+            ]
+        },
+        options: {
+            plugins: { legend: { display: false } },
+            scales: {
+                y: { beginAtZero: true, ticks: { precision: 0 } }
             }
         }
     });
+
+    criarGrafico(graficoResponsabilidadeEl, {
+        type: 'doughnut',
+        data: {
+            labels: ['Apenas empresa', 'Apenas trabalhador', 'Ambos'],
+            datasets: [
+                {
+                    data: [respEmpresa, respTrabalhador, respAmbos],
+                    backgroundColor: ['#7a8a95', '#8f7f6f', '#3e7d73'],
+                    borderWidth: 0
+                }
+            ]
+        },
+        options: {
+            plugins: { legend: { position: 'bottom' } }
+        }
+    });
+
 }
 
 function renderTabela(respostas) {
@@ -214,38 +293,24 @@ function renderTabela(respostas) {
     for (const item of respostas) {
         const tr = document.createElement('tr');
 
-        const tdNome = document.createElement('td');
-        tdNome.textContent = item.nome;
+        const colunas = [
+            item.nome,
+            item.curso,
+            item.abrilVerde,
+            item.atitudes,
+            item.risco,
+            item.responsabilidade,
+            new Date(item.criadoEm).toLocaleString('pt-BR')
+        ];
 
-        const tdCurso = document.createElement('td');
-        tdCurso.textContent = item.curso;
-
-        const tdPreferencia = document.createElement('td');
-        tdPreferencia.textContent = item.preferencia;
-
-        const tdAbrilVerde = document.createElement('td');
-        tdAbrilVerde.textContent = item.abrilVerde;
-
-        const tdAtitudes = document.createElement('td');
-        tdAtitudes.textContent = item.atitudes;
-
-        const tdRisco = document.createElement('td');
-        tdRisco.textContent = item.risco;
-
-        const tdResponsabilidade = document.createElement('td');
-        tdResponsabilidade.textContent = item.responsabilidade;
-
-        const tdData = document.createElement('td');
-        tdData.textContent = new Date(item.criadoEm).toLocaleString('pt-BR');
+        for (const valor of colunas) {
+            const td = document.createElement('td');
+            td.textContent = normalizarTexto(valor, '-');
+            tr.appendChild(td);
+        }
 
         const tdAcoes = document.createElement('td');
         tdAcoes.className = 'td-acoes';
-
-        const btnEditar = document.createElement('button');
-        btnEditar.className = 'secundario';
-        btnEditar.textContent = 'Editar';
-        btnEditar.dataset.action = 'edit';
-        btnEditar.dataset.id = String(item.id);
 
         const btnExcluir = document.createElement('button');
         btnExcluir.className = 'perigo';
@@ -253,27 +318,46 @@ function renderTabela(respostas) {
         btnExcluir.dataset.action = 'delete';
         btnExcluir.dataset.id = String(item.id);
 
-        tdAcoes.appendChild(btnEditar);
         tdAcoes.appendChild(btnExcluir);
-
-        tr.appendChild(tdNome);
-        tr.appendChild(tdCurso);
-        tr.appendChild(tdPreferencia);
-        tr.appendChild(tdAbrilVerde);
-        tr.appendChild(tdAtitudes);
-        tr.appendChild(tdRisco);
-        tr.appendChild(tdResponsabilidade);
-        tr.appendChild(tdData);
         tr.appendChild(tdAcoes);
+
         tabelaBody.appendChild(tr);
     }
 }
 
+tabelaBody.addEventListener('click', async (e) => {
+    const botao = e.target.closest('button[data-action="delete"]');
+    if (!botao) {
+        return;
+    }
+
+    const id = Number(botao.dataset.id);
+    if (!Number.isFinite(id)) {
+        return;
+    }
+
+    const confirmou = window.confirm('Deseja realmente excluir este registro?');
+    if (!confirmou) {
+        return;
+    }
+
+    const resposta = await apiFetch(`/api/admin/respostas/${id}`, { method: 'DELETE' });
+    const dados = await lerJsonSeguro(resposta);
+
+    if (!resposta.ok) {
+        crudInfo.textContent = dados.mensagem || 'Falha ao excluir registro.';
+        return;
+    }
+
+    crudInfo.textContent = 'Registro excluido com sucesso.';
+    await carregarDashboard();
+});
+
 async function carregarDashboard() {
-    respostasState = await carregarRespostas();
-    renderMetricas(respostasState);
-    renderGraficos(respostasState);
-    renderTabela(respostasState);
+    const respostas = await carregarRespostas();
+    renderMetricas(respostas);
+    renderGraficos(respostas);
+    renderTabela(respostas);
 }
 
 loginForm.addEventListener('submit', async (e) => {
@@ -303,121 +387,6 @@ loginForm.addEventListener('submit', async (e) => {
     }
 });
 
-criarForm.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    crudInfo.textContent = '';
-
-    try {
-        const resposta = await apiFetch('/api/admin/respostas', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                nome: novoNome.value,
-                curso: novoCurso.value,
-                preferencia: novaPreferencia.value,
-                abrilVerde: novoAbrilVerde.value,
-                atitudes: novaAtitudes.value,
-                risco: novoRisco.value,
-                responsabilidade: novaResponsabilidade.value
-            })
-        });
-
-        const dados = await lerJsonSeguro(resposta);
-        if (!resposta.ok) {
-            throw new Error(dados.mensagem || 'Falha ao criar registro.');
-        }
-
-        criarForm.reset();
-        crudInfo.textContent = 'Registro criado com sucesso.';
-        await carregarDashboard();
-    } catch (erro) {
-        crudInfo.textContent = erro.message;
-    }
-});
-
-tabelaBody.addEventListener('click', async (e) => {
-    const botao = e.target.closest('button[data-action]');
-    if (!botao) {
-        return;
-    }
-
-    const id = Number(botao.dataset.id);
-    const acao = botao.dataset.action;
-
-    if (acao === 'edit') {
-        const registro = respostasState.find((item) => Number(item.id) === id);
-        if (!registro) {
-            return;
-        }
-
-        editandoId = id;
-        editNome.value = registro.nome;
-        editCurso.value = registro.curso;
-        editPreferencia.value = registro.preferencia;
-        editAbrilVerde.value = registro.abrilVerde;
-        editAtitudes.value = registro.atitudes;
-        editRisco.value = registro.risco;
-        editResponsabilidade.value = registro.responsabilidade;
-        editErro.textContent = '';
-        editModal.showModal();
-        return;
-    }
-
-    if (acao === 'delete') {
-        const confirmou = window.confirm('Deseja realmente excluir este registro?');
-        if (!confirmou) {
-            return;
-        }
-
-        const resposta = await apiFetch(`/api/admin/respostas/${id}`, { method: 'DELETE' });
-        const dados = await lerJsonSeguro(resposta);
-
-        if (!resposta.ok) {
-            crudInfo.textContent = dados.mensagem || 'Falha ao excluir registro.';
-            return;
-        }
-
-        crudInfo.textContent = 'Registro excluido com sucesso.';
-        await carregarDashboard();
-    }
-});
-
-editForm.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    editErro.textContent = '';
-
-    try {
-        const resposta = await apiFetch(`/api/admin/respostas/${editandoId}`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                nome: editNome.value,
-                curso: editCurso.value,
-                preferencia: editPreferencia.value,
-                abrilVerde: editAbrilVerde.value,
-                atitudes: editAtitudes.value,
-                risco: editRisco.value,
-                responsabilidade: editResponsabilidade.value
-            })
-        });
-
-        const dados = await lerJsonSeguro(resposta);
-        if (!resposta.ok) {
-            throw new Error(dados.mensagem || 'Falha ao editar registro.');
-        }
-
-        editModal.close();
-        crudInfo.textContent = 'Registro atualizado com sucesso.';
-        await carregarDashboard();
-    } catch (erro) {
-        editErro.textContent = erro.message;
-    }
-});
-
-cancelarEdicao.addEventListener('click', () => {
-    editModal.close();
-});
-
 refreshBtn.addEventListener('click', async () => {
     crudInfo.textContent = '';
     await carregarDashboard();
@@ -429,6 +398,7 @@ logoutBtn.addEventListener('click', async () => {
     tabelaBody.innerHTML = '';
     totalInfo.textContent = '';
     crudInfo.textContent = '';
+    limparGrafico();
 });
 
 checarSessao();

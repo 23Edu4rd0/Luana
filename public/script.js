@@ -75,6 +75,11 @@ function mostrarEtapa(idEtapa, registrarHistorico = true) {
 }
 
 function mostrarTelaFeedback({ correto, mensagem, proximaEtapa, titulo = 'Observacao', mostrarImagem = false, acaoAoAvancar = null }) {
+    
+    if (timerFeedback) {
+        clearTimeout(timerFeedback);
+        timerFeedback = null;
+    }
     feedbackTitulo.textContent = titulo;
     feedbackTexto.textContent = mensagem;
     feedbackContent.classList.remove('correto', 'errado');
@@ -186,18 +191,28 @@ formularioPergunta5.addEventListener('submit', async function(e) {
         proximaEtapa: 'etapa7',
         mostrarImagem: false,
         acaoAoAvancar: async () => {
-            const respostaApi = await apiFetch('/api/respostas', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(dadosUsuario)
-            });
+          console.log("[DEBUG] dadosUsuario:", dadosUsuario); //
+          if (
+            !dadosUsuario.abrilVerde ||
+            !dadosUsuario.atitudes ||
+            !dadosUsuario.risco
+          ) {
+            throw new Error(
+              "Respostas incompletas. Por favor, responda todas as perguntas.",
+            );
+          }
+          const respostaApi = await apiFetch("/api/respostas", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(dadosUsuario),
+          });
 
-            const payload = await lerJsonSeguro(respostaApi);
-            if (!respostaApi.ok) {
-                throw new Error(payload.mensagem || 'Nao foi possivel enviar.');
-            }
+          const payload = await lerJsonSeguro(respostaApi);
+          if (!respostaApi.ok) {
+            throw new Error(payload.mensagem || "Nao foi possivel enviar.");
+          }
         }
     });
 });

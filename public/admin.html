@@ -39,62 +39,41 @@
                     <h3 id="mTotal">0</h3>
                 </article>
                 <article class="card metrica">
-                    <p class="metrica-label">Integro</p>
-                    <h3 id="mIntegro">0</h3>
+                    <p class="metrica-label">Conhecem Abril Verde</p>
+                    <h3 id="mAbrilSim">0</h3>
                 </article>
                 <article class="card metrica">
-                    <p class="metrica-label">Acidentado</p>
-                    <h3 id="mAcidentado">0</h3>
+                    <p class="metrica-label">Atitudes preventivas (SIM)</p>
+                    <h3 id="mAtitudesSim">0</h3>
+                </article>
+                <article class="card metrica">
+                    <p class="metrica-label">Aderência (4/4)</p>
+                    <h3 id="mAderencia">0%</h3>
                 </article>
             </div>
 
             <div class="graficos">
                 <article class="card grafico-card">
-                    <h3>Distribuicao de preferencia</h3>
-                    <canvas id="graficoPreferencia"></canvas>
+                    <h3>Cursos com mais respostas</h3>
+                    <canvas id="graficoCursosTotal"></canvas>
                 </article>
                 <article class="card grafico-card">
-                    <h3>Votos por curso</h3>
-                    <canvas id="graficoDia"></canvas>
+                    <h3>Atitudes preventivas (SIM x NÃO)</h3>
+                    <canvas id="graficoAtitudes"></canvas>
+                </article>
+                <article class="card grafico-card">
+                    <h3>Voce sabe o que e Abril Verde?</h3>
+                    <canvas id="graficoAbrilVerde"></canvas>
+                </article>
+                <article class="card grafico-card">
+                    <h3>Conduta em risco</h3>
+                    <canvas id="graficoRisco"></canvas>
+                </article>
+                <article class="card grafico-card">
+                    <h3>Responsabilidade percebida</h3>
+                    <canvas id="graficoResponsabilidade"></canvas>
                 </article>
             </div>
-
-            <section class="card bloco-crud">
-                <h3>Criar resposta manual</h3>
-                <form id="criarForm" class="crud-form">
-                    <input id="novoNome" type="text" placeholder="Nome" required>
-                    <input id="novoCurso" type="text" placeholder="Curso" required>
-                    <select id="novaPreferencia" required>
-                        <option value="">Selecione preferência</option>
-                        <option value="ÍNTEGRO">ÍNTEGRO</option>
-                        <option value="ACIDENTADO">ACIDENTADO</option>
-                    </select>
-                    <select id="novoAbrilVerde" required>
-                        <option value="">Selecione abril verde</option>
-                        <option value="SIM">SIM</option>
-                        <option value="NAO">NÃO</option>
-                    </select>
-                    <select id="novaAtitudes" required>
-                        <option value="">Selecione atitudes</option>
-                        <option value="SIM">SIM</option>
-                        <option value="NAO">NÃO</option>
-                    </select>
-                    <select id="novoRisco" required>
-                        <option value="">Selecione risco</option>
-                        <option value="IGNORARIA">IGNORARIA</option>
-                        <option value="AVISARIA">AVISARIA</option>
-                        <option value="TENTARIA">TENTARIA</option>
-                    </select>
-                    <select id="novaResponsabilidade" required>
-                        <option value="">Selecione responsabilidade</option>
-                        <option value="EMPRESA">APENAS A EMPRESA</option>
-                        <option value="TRABALHADOR">APENAS O TRABALHADOR</option>
-                        <option value="AMBOS">AMBOS</option>
-                    </select>
-                    <button type="submit">Criar</button>
-                </form>
-                <p id="crudInfo" class="info"></p>
-            </section>
 
             <section class="card bloco-tabela">
                 <div class="tabela-cabecalho">
@@ -107,7 +86,6 @@
                             <tr>
                                 <th>Nome</th>
                                 <th>Curso</th>
-                                <th>Preferência</th>
                                 <th>Abril Verde</th>
                                 <th>Atitudes</th>
                                 <th>Risco</th>
@@ -119,44 +97,10 @@
                         <tbody id="tabelaBody"></tbody>
                     </table>
                 </div>
+                <p id="crudInfo" class="info"></p>
             </section>
             <div id="tabelaVazia" class="card tabela-vazia hidden">Nenhuma resposta cadastrada.</div>
         </section>
-
-        <dialog id="editModal" class="modal">
-            <form id="editForm" class="modal-conteudo">
-                <h3>Editar resposta</h3>
-                <input id="editNome" type="text" required>
-                <input id="editCurso" type="text" required>
-                <select id="editPreferencia" required>
-                    <option value="ÍNTEGRO">ÍNTEGRO</option>
-                    <option value="ACIDENTADO">ACIDENTADO</option>
-                </select>
-                <select id="editAbrilVerde" required>
-                    <option value="SIM">SIM</option>
-                    <option value="NAO">NÃO</option>
-                </select>
-                <select id="editAtitudes" required>
-                    <option value="SIM">SIM</option>
-                    <option value="NAO">NÃO</option>
-                </select>
-                <select id="editRisco" required>
-                    <option value="IGNORARIA">IGNORARIA</option>
-                    <option value="AVISARIA">AVISARIA</option>
-                    <option value="TENTARIA">TENTARIA</option>
-                </select>
-                <select id="editResponsabilidade" required>
-                    <option value="EMPRESA">APENAS A EMPRESA</option>
-                    <option value="TRABALHADOR">APENAS O TRABALHADOR</option>
-                    <option value="AMBOS">AMBOS</option>
-                </select>
-                <div class="modal-acoes">
-                    <button type="button" id="cancelarEdicao" class="secundario">Cancelar</button>
-                    <button type="submit">Salvar</button>
-                </div>
-                <p id="editErro" class="erro"></p>
-            </form>
-        </dialog>
     </main>
 
     <script src="admin.js"></script>

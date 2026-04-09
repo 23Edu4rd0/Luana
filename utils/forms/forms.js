@@ -1,3 +1,33 @@
+/**
+ * forms.js - Lógica de formulários e navegação entre etapas
+ */
+
+// Respostas corretas para validação
+const RESPOSTAS_CORRETAS = {
+    abrilVerde: 'SIM',
+    atitudes: 'SIM',
+    risco: 'AVISARIA',
+    responsabilidade: 'AMBOS'
+};
+
+// Estado do formulário
+let dadosUsuario = {
+    nome: '',
+    curso: '',
+    abrilVerde: '',
+    atitudes: '',
+    risco: '',
+    responsabilidade: '',
+    preferencia: ''  // Compatibilidade com DB
+};
+
+let etagaAtual = 'etapa1';
+let proximaEtapaAposFeedback = null;
+let acaoAposFeedback = null;
+let timerFeedback = null;
+let envioFinalPromise = null;
+const historicoEtapas = [];
+
 // Elementos do DOM
 const etapa1 = document.getElementById('etapa1');
 const etapa2 = document.getElementById('etapa2');
@@ -15,54 +45,21 @@ const feedbackContent = document.getElementById('feedbackContent');
 const feedbackTexto = document.getElementById('feedbackTexto');
 const feedbackImagem = document.getElementById('feedbackImagem');
 const feedbackProximo = document.getElementById('feedbackProximo');
-const cardsOpcao = document.querySelectorAll('.card-opcao');
-const API_BASE = '';
+const loadingOverlay = document.createElement('div');
+loadingOverlay.id = 'loadingOverlay';
+loadingOverlay.className = 'loading-overlay';
+loadingOverlay.innerHTML = '<div class="loading-spinner" aria-hidden="true"></div><p>Enviando respostas...</p>';
+document.body.appendChild(loadingOverlay);
 
-// Respostas corretas para validação
-const RESPOSTAS_CORRETAS = {
-    abrilVerde: 'SIM',
-    atitudes: 'SIM',
-    risco: 'AVISARIA',
-    responsabilidade: 'AMBOS'
-};
-
-let dadosUsuario = {
-    nome: '',
-    curso: '',
-    abrilVerde: '',
-    atitudes: '',
-    risco: '',
-    responsabilidade: '',
-    preferencia: ''  // Mantém compatibilidade com DB
-};
-
-let etagaAtual = 'etapa1';
-let proximaEtapaAposFeedback = null;
-let acaoAposFeedback = null;
-let timerFeedback = null;
-const historicoEtapas = [];
-
-async function lerJsonSeguro(resposta) {
-    const texto = await resposta.text();
-
-    if (!texto) {
-        return {};
-    }
-
-    try {
-        return JSON.parse(texto);
-    } catch {
-        return {};
-    }
+function mostrarLoading() {
+    loadingOverlay.classList.add('ativo');
 }
 
-function apiFetch(caminho, opcoes = {}) {
-    return fetch(`${API_BASE}${caminho}`, {
-        ...opcoes,
-        credentials: 'include'
-    });
+function esconderLoading() {
+    loadingOverlay.classList.remove('ativo');
 }
 
+// Mostrar/esconder etapas
 function mostrarEtapa(idEtapa, registrarHistorico = true) {
     if (registrarHistorico && etagaAtual !== idEtapa) {
         historicoEtapas.push(etagaAtual);
@@ -71,14 +68,19 @@ function mostrarEtapa(idEtapa, registrarHistorico = true) {
     document.querySelectorAll('.etapa').forEach((el) => el.classList.remove('ativo'));
     document.getElementById(idEtapa).classList.add('ativo');
     etagaAtual = idEtapa;
+
+    if (window.FormKeyboard && typeof window.FormKeyboard.atualizarEtapaAtiva === 'function') {
+        window.FormKeyboard.atualizarEtapaAtiva();
+    }
 }
 
-function mostrarTelaFeedback({ correto, mensagem, proximaEtapa, titulo = 'Observacao', mostrarImagem = false, acaoAoAvancar = null }) {
-    
+// Mostrar tela de feedback
+function mostrarTelaFeedback({ correto, mensagem, proximaEtapa, titulo = 'Observacao', mostrarImagem = false, acaoAoAvancar = null, autoAvancoMs = 7000 }) {
     if (timerFeedback) {
         clearTimeout(timerFeedback);
         timerFeedback = null;
     }
+
     feedbackTitulo.textContent = titulo;
     feedbackTexto.textContent = mensagem;
     feedbackContent.classList.remove('correto', 'errado');
@@ -94,25 +96,30 @@ function mostrarTelaFeedback({ correto, mensagem, proximaEtapa, titulo = 'Observ
     acaoAposFeedback = acaoAoAvancar;
     mostrarEtapa('etapaFeedback');
 
-    if (timerFeedback) {
-        clearTimeout(timerFeedback);
+    if (autoAvancoMs > 0) {
+        timerFeedback = setTimeout(() => {
+            feedbackProximo.click();
+        }, autoAvancoMs);
     }
-
-    timerFeedback = setTimeout(() => {
-        feedbackProximo.click();
-    }, 7000);
 }
 
 // ========== ETAPA 1: Dados Pessoais ==========
 formularioDados.addEventListener('submit', function(e) {
     e.preventDefault();
     
-    dadosUsuario.nome = document.getElementById('nome').value;
+    dadosUsuario.nome = capitalizarNome(document.getElementById('nome').value);
     dadosUsuario.curso = document.getElementById('curso').value;
     
     mostrarEtapa('etapa2');
 });
 
+// Capitalizar nome automaticamente quando o usuário sai do campo (blur)
+const inputNome = document.getElementById('nome');
+if (inputNome) {
+    inputNome.addEventListener('blur', function() {
+        this.value = capitalizarNome(this.value);
+    });
+}
 // ========== ETAPA 2: Pergunta Abril Verde ==========
 formularioPergunta2.addEventListener('submit', function(e) {
     e.preventDefault();
@@ -140,7 +147,6 @@ formularioPergunta3.addEventListener('submit', function(e) {
     const correto = resposta === RESPOSTAS_CORRETAS.atitudes;
     dadosUsuario.atitudes = resposta;
 
-    // Compatibilidade com validacao do backend existente.
     dadosUsuario.preferencia = correto ? 'ÍNTEGRO' : 'ACIDENTADO';
 
     mostrarTelaFeedback({
@@ -181,6 +187,26 @@ formularioPergunta5.addEventListener('submit', async function(e) {
     dadosUsuario.responsabilidade = resposta;
     const correto = resposta === RESPOSTAS_CORRETAS.responsabilidade;
 
+    // Inicia o envio final antes do clique em "Proximo" para reduzir a sensação de atraso.
+    envioFinalPromise = (async () => {
+        if (!dadosUsuario.abrilVerde || !dadosUsuario.atitudes || !dadosUsuario.risco) {
+            throw new Error('Respostas incompletas. Por favor, responda todas as perguntas.');
+        }
+
+        const respostaApi = await apiFetch('/api/respostas', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(dadosUsuario),
+        });
+
+        const payload = await lerJsonSeguro(respostaApi);
+        if (!respostaApi.ok) {
+            throw new Error(payload.mensagem || 'Nao foi possivel enviar.');
+        }
+    })();
+
     mostrarTelaFeedback({
         correto,
         titulo: correto ? 'Resposta correta' : 'Quase la',
@@ -189,34 +215,16 @@ formularioPergunta5.addEventListener('submit', async function(e) {
             : 'A empresa tem responsabilidade, sim, mas o trabalhador tambem. Seguranca no trabalho e compromisso de todos.',
         proximaEtapa: 'etapa7',
         mostrarImagem: false,
+        autoAvancoMs: 1500,
         acaoAoAvancar: async () => {
-          console.log("[DEBUG] dadosUsuario:", dadosUsuario); //
-          if (
-            !dadosUsuario.abrilVerde ||
-            !dadosUsuario.atitudes ||
-            !dadosUsuario.risco
-          ) {
-            throw new Error(
-              "Respostas incompletas. Por favor, responda todas as perguntas.",
-            );
-          }
-          const respostaApi = await apiFetch("/api/respostas", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify(dadosUsuario),
-          });
-
-          const payload = await lerJsonSeguro(respostaApi);
-          if (!respostaApi.ok) {
-            throw new Error(payload.mensagem || "Nao foi possivel enviar.");
-          }
+            if (envioFinalPromise) {
+                await envioFinalPromise;
+            }
         }
     });
 });
 
-// ========== Funções de navegação ==========
+// ========== Navegação ==========
 function voltarEtapa() {
     const anterior = historicoEtapas.pop();
     if (!anterior) {
@@ -226,11 +234,18 @@ function voltarEtapa() {
 }
 
 feedbackProximo.addEventListener('click', async () => {
+    let loadingDelayTimer = null;
+
     try {
         if (timerFeedback) {
             clearTimeout(timerFeedback);
             timerFeedback = null;
         }
+
+        // Evita flash muito rapido: so mostra loading se demorar um pouco.
+        loadingDelayTimer = setTimeout(() => {
+            mostrarLoading();
+        }, 140);
 
         if (acaoAposFeedback) {
             await acaoAposFeedback();
@@ -240,18 +255,46 @@ feedbackProximo.addEventListener('click', async () => {
         }
     } catch (erro) {
         console.error('Erro ao avancar apos feedback:', erro);
+    } finally {
+        if (loadingDelayTimer) {
+            clearTimeout(loadingDelayTimer);
+        }
+        esconderLoading();
     }
 });
 
-// Fazer cards clicáveis
-for (const card of cardsOpcao) {
-    card.addEventListener('click', function() {
-        const radio = card.querySelector('input[type="radio"]');
-        if (!radio) {
+// Fluxo simplificado: Enter avanca na etapa ativa
+document.addEventListener('keydown', (e) => {
+    if (e.key !== 'Enter') {
+        return;
+    }
+
+    const etapaAtiva = document.querySelector('.etapa.ativo');
+    if (!etapaAtiva) {
+        return;
+    }
+
+    const idEtapaAtiva = etapaAtiva.id;
+
+    if (idEtapaAtiva === 'etapaFeedback') {
+        e.preventDefault();
+        feedbackProximo.click();
+        return;
+    }
+
+    if (idEtapaAtiva === 'etapa2' || idEtapaAtiva === 'etapa3' || idEtapaAtiva === 'etapa4' || idEtapaAtiva === 'etapa5') {
+        const radioSelecionado = etapaAtiva.querySelector('input[type="radio"]:checked');
+        if (!radioSelecionado) {
             return;
         }
 
-        radio.checked = true;
-        radio.dispatchEvent(new Event('change', { bubbles: true }));
-    });
-}
+        const formulario = etapaAtiva.querySelector('form');
+        if (!formulario) {
+            return;
+        }
+
+        e.preventDefault();
+        formulario.requestSubmit();
+    }
+});
+

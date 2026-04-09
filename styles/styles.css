@@ -216,6 +216,12 @@ input[type="email"]:focus {
     box-shadow: 0 12px 24px rgba(1, 12, 10, 0.4);
 }
 
+.card-opcao:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(183, 248, 213, 0.9), 0 12px 24px rgba(1, 12, 10, 0.4);
+    transform: translateY(-3px);
+}
+
 .card-opcao input[type="radio"] {
     position: absolute;
     width: 0;
@@ -396,6 +402,32 @@ input[type="email"]:focus {
 
     .piada-rodape {
         font-size: 0.7rem;
+    }
+}
+
+@media (min-width: 901px) {
+    .opcoes-container {
+        grid-template-columns: repeat(auto-fit, minmax(240px, 280px));
+        justify-content: center;
+        gap: 14px;
+    }
+
+    .card-opcao {
+        width: 100%;
+        max-width: 280px;
+        aspect-ratio: 1 / 1;
+        display: grid;
+        grid-template-rows: 1fr auto;
+    }
+
+    .icone-opcao {
+        min-height: 0;
+        height: 100%;
+        aspect-ratio: auto;
+    }
+
+    .label-opcao {
+        min-height: 52px;
     }
 }
 
@@ -658,4 +690,39 @@ input[type="email"]:focus {
     background: rgba(255, 255, 255, 0.05);
     border-left: 3px solid rgba(183, 248, 213, 0.5);
     border-radius: 6px;
+}
+
+.loading-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 12px;
+    background: rgba(6, 20, 18, 0.62);
+    backdrop-filter: blur(4px);
+    color: #dfffee;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+}
+
+.loading-overlay.ativo {
+    display: flex;
+}
+
+.loading-spinner {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    border: 4px solid rgba(183, 248, 213, 0.26);
+    border-top-color: #b7f8d5;
+    animation: girarLoading 0.8s linear infinite;
+}
+
+@keyframes girarLoading {
+    to {
+        transform: rotate(360deg);
+    }
 }

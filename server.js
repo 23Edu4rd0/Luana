@@ -80,8 +80,21 @@ app.use(
   }),
 );
 
+// Servir arquivos estáticos
+app.use(express.static(__dirname)); // Raiz (index.html)
+app.use(express.static(path.join(__dirname, "styles")));
+app.use(express.static(path.join(__dirname, "utils")));
+app.use(express.static(path.join(__dirname, "assets")));
 app.use(express.static(path.join(__dirname, "public")));
 app.use(express.static(path.join(__dirname, "static")));
+
+// Servir páginas HTML adicionais
+app.get("/admin.html", (req, res) =>
+  res.sendFile(path.join(__dirname, "pages/admin.html"))
+);
+app.get("/joao_e_feio.html", (req, res) =>
+  res.sendFile(path.join(__dirname, "pages/joao_e_feio.html"))
+);
 
 function normalizarRespostaEntrada({
   nome,
@@ -171,6 +184,25 @@ async function inicializarArmazenamento() {
       "UPDATE respostas SET curso = email WHERE (curso IS NULL OR curso = '') AND email IS NOT NULL",
     );
 
+    // Remover índice anterior se existir (para evitar conflито de duplicatas)
+    await db.query(`DROP INDEX IF EXISTS idx_respostas_nome_curso`).catch(() => {});
+
+    // Remover registros duplicados mantendo apenas o mais recente
+    await db.query(`
+      DELETE FROM respostas 
+      WHERE id NOT IN (
+        SELECT MAX(id) 
+        FROM respostas 
+        GROUP BY LOWER(TRIM(nome)), LOWER(TRIM(curso))
+      )
+    `);
+
+    // Adicionar constraint UNIQUE para (nome, curso)
+    await db.query(`
+      CREATE UNIQUE INDEX IF NOT EXISTS idx_respostas_nome_curso 
+      ON respostas (LOWER(TRIM(nome)), LOWER(TRIM(curso)))
+    `);
+
     await db.query(
       "CREATE INDEX IF NOT EXISTS idx_respostas_criado_em ON respostas (criado_em DESC)",
     );
@@ -220,16 +252,42 @@ async function inserirResposta({
   });
 
   if (!useDatabase) {
+    // Usar upsert para JSON: procura por nome + curso, se existe atualiza, se não insere
     const respostas = await lerRespostas();
+    const nomeNorm = String(entrada.nome).trim().toLowerCase();
+    const cursoNorm = String(entrada.curso).trim().toLowerCase();
+    
+    const indiceExistente = respostas.findIndex(r => 
+      String(r.nome).trim().toLowerCase() === nomeNorm && 
+      String(r.curso).trim().toLowerCase() === cursoNorm
+    );
+
+    if (indiceExistente >= 0) {
+      // Atualizar registro existente
+      respostas[indiceExistente] = {
+        ...respostas[indiceExistente],
+        preferencia: entrada.preferencia,
+        risco: entrada.risco,
+        atitudes: entrada.atitudes,
+        abrilVerde: entrada.abrilVerde,
+        responsabilidade: entrada.responsabilidade,
+      };
+      await salvarRespostas(respostas);
+      return respostas[indiceExistente];
+    }
+
+    // Inserir novo registro
     const registro = criarRegistro(entrada);
     respostas.push(registro);
     await salvarRespostas(respostas);
     return registro;
   }
 
-  const resultado = await db.query(
-    `INSERT INTO respostas (nome, curso, preferencia, risco, atitudes, abrilVerde, responsabilidade)
-     VALUES ($1, $2, $3, $4, $5, $6, $7)
+  // Usar upsert para PostgreSQL: Primeiro tenta atualizar, se não houver linha atualizada, insere
+  let resultado = await db.query(
+    `UPDATE respostas 
+     SET preferencia = $3, risco = $4, atitudes = $5, abrilVerde = $6, responsabilidade = $7
+     WHERE LOWER(TRIM(nome)) = LOWER(TRIM($1)) AND LOWER(TRIM(curso)) = LOWER(TRIM($2))
      RETURNING id, nome, curso, email, preferencia, risco, atitudes, abrilVerde, responsabilidade, criado_em`,
     [
       entrada.nome,
@@ -241,6 +299,24 @@ async function inserirResposta({
       entrada.responsabilidade,
     ],
   );
+
+  // Se nenhuma linha foi atualizada, inserir novo registro
+  if (resultado.rows.length === 0) {
+    resultado = await db.query(
+      `INSERT INTO respostas (nome, curso, preferencia, risco, atitudes, abrilVerde, responsabilidade)
+       VALUES ($1, $2, $3, $4, $5, $6, $7)
+       RETURNING id, nome, curso, email, preferencia, risco, atitudes, abrilVerde, responsabilidade, criado_em`,
+      [
+        entrada.nome,
+        entrada.curso,
+        entrada.preferencia,
+        entrada.risco,
+        entrada.atitudes,
+        entrada.abrilVerde,
+        entrada.responsabilidade,
+      ],
+    );
+  }
 
   return mapearRegistroDb(resultado.rows[0]);
 }

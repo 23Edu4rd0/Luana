@@ -467,7 +467,6 @@ function exigeAdmin(req, res, next) {
 
 app.post("/api/respostas", async (req, res) => {
   try {
-    console.log("[DEBUG] body recebido:", req.body);
     const {
       nome,
       curso,
